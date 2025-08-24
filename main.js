@@ -1,6 +1,6 @@
 // main.js
 
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron'); // Add ipcMain
 const path = require('path');
 
 // Function to create the main application window
@@ -26,6 +26,23 @@ const createWindow = () => {
 
 // This method is called when Electron has finished initialization
 app.whenReady().then(() => {
+  // ** NEW: Add IPC handler to listen for 'open-file' requests **
+  ipcMain.handle('open-file', async (event, filePath) => {
+    try {
+      // shell.openPath returns a promise resolving to an error string if it fails
+      const errorMessage = await shell.openPath(filePath);
+      if (errorMessage) {
+        // If there's an error message, send it back
+        return { success: false, error: errorMessage };
+      }
+      // If successful, send success status
+      return { success: true };
+    } catch (error) {
+      // If an unexpected error occurs, send that back
+      return { success: false, error: error.message };
+    }
+  });
+
   createWindow();
 
   // Handle macOS behavior

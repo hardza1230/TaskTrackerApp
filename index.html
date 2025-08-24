@@ -162,6 +162,12 @@
         </div>
     </div>
 
+    <!-- ** NEW: Notification Element ** -->
+    <div id="notification" class="fixed bottom-5 right-5 bg-red-600 text-white p-4 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50 max-w-sm">
+        <h4 class="font-bold mb-1">เกิดข้อผิดพลาด</h4>
+        <p id="notification-message" class="text-sm"></p>
+    </div>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -252,6 +258,17 @@
                 return [year, month, day].join('-');
             }
 
+            // ** NEW: Notification Function **
+            function showNotification(message) {
+                const notification = document.getElementById('notification');
+                const messageEl = document.getElementById('notification-message');
+                messageEl.textContent = message;
+                notification.classList.remove('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    notification.classList.add('opacity-0', 'pointer-events-none');
+                }, 6000); // Hide after 6 seconds
+            }
+
             // --- Render Functions ---
             function renderShortcuts() {
                 shortcutsContainer.innerHTML = '';
@@ -276,10 +293,14 @@
                         button.dataset.link = shortcut.link;
                         button.innerHTML = `<i class="fas ${shortcut.icon || 'fa-link'} mr-2"></i>${shortcut.name}`;
                         
-                        button.addEventListener('click', () => {
+                        // ** UPDATED: Add async click handler **
+                        button.addEventListener('click', async () => {
                             const link = button.dataset.link;
                             if (link && link !== '#') {
-                                window.electronAPI.openFile(link);
+                                const result = await window.electronAPI.openFile(link);
+                                if (!result.success) {
+                                    showNotification(`ไม่สามารถเปิด Shortcut ได้: ${result.error}`);
+                                }
                             }
                         });
                         shortcutsContainer.appendChild(button);
@@ -487,7 +508,7 @@
             }
 
             // --- Event Delegation for Dynamic Elements ---
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', async function(e) { // ** Add async here **
                 if (e.target && e.target.closest('#add-shortcut-btn')) {
                     shortcutsMasterData.push({ id: Date.now(), name: 'New Shortcut', link: '', icon: 'fa-link' });
                     renderShortcuts();
@@ -531,7 +552,10 @@
                     const button = e.target.closest('.task-link-btn');
                     const link = button.dataset.link;
                     if (link && link !== '#') {
-                        window.electronAPI.openFile(link);
+                        const result = await window.electronAPI.openFile(link);
+                        if (!result.success) {
+                            showNotification(`ไม่สามารถเปิด Task link ได้: ${result.error}`);
+                        }
                     }
                 }
             });

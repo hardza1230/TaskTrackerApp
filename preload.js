@@ -1,18 +1,17 @@
 // preload.js
 
-const { contextBridge, shell } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron'); // Add ipcRenderer
 
 // Expose a secure API to the renderer process (your index.html)
 contextBridge.exposeInMainWorld('electronAPI', {
   /**
-   * Opens a given local file path or a web URL in the default browser.
-   * @param {string} path - The absolute path to the file/program or a web URL.
+   * Asynchronously asks the main process to open a path and returns the result.
+   * @param {string} path - The path to open.
+   * @returns {Promise<{success: boolean, error?: string}>}
    */
-  openFile: (path) => {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      shell.openExternal(path);
-    } else {
-      shell.openPath(path);
-    }
+  openFile: async (path) => {
+    // Use 'invoke' to send a message to the 'open-file' handler and wait for a response
+    const result = await ipcRenderer.invoke('open-file', path);
+    return result;
   }
 });
