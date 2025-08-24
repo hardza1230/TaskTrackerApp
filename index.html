@@ -52,7 +52,6 @@
             border-color: #9ca3af; /* gray-400 */
             transform: translateY(-2px);
         }
-        /* Modal styles */
         .modal-overlay {
             transition: opacity 0.2s ease-in-out;
             z-index: 50;
@@ -69,7 +68,6 @@
         .edit-action-btn:hover {
             color: #ef4444; /* red-500 */
         }
-        /* Icon Picker Styles */
         .icon-picker-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -107,9 +105,7 @@
             
             <div class="bg-white p-4 rounded-xl shadow-md border border-gray-200 mb-6">
                 <h3 class="font-bold text-lg text-gray-700 mb-3">Tools & Shortcuts</h3>
-                <div id="shortcuts-container" class="flex flex-wrap items-center gap-4">
-                    <!-- Shortcuts will be injected here -->
-                </div>
+                <div id="shortcuts-container" class="flex flex-wrap items-center gap-4"></div>
             </div>
            
             <div class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
@@ -132,10 +128,10 @@
             <button id="clear-btn" class="shortcut-btn rounded-lg px-4 py-2 font-semibold bg-red-500 text-white border-red-600 hover:bg-red-600"><i class="fas fa-trash mr-2"></i>ล้างข้อมูลวันนี้</button>
         </div>
 
-        <!-- Main Task Grid with dynamic height -->
-        <main id="task-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-            <!-- Task cards will be injected here -->
-        </main>
+        <main id="task-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start"></main>
+        
+        <!-- Add Workflow Button (Edit mode only) -->
+        <div id="add-workflow-container" class="mt-6"></div>
     </div>
 
     <!-- Modals -->
@@ -149,20 +145,15 @@
             </div>
         </div>
     </div>
-
     <div id="icon-picker-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
         <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform scale-95">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold">เลือกไอคอน</h3>
                 <button id="close-icon-picker-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
             </div>
-            <div id="icon-picker-grid" class="icon-picker-grid max-h-64 overflow-y-auto">
-                <!-- Icons will be injected here -->
-            </div>
+            <div id="icon-picker-grid" class="icon-picker-grid max-h-64 overflow-y-auto"></div>
         </div>
     </div>
-
-    <!-- ** NEW: Notification Element ** -->
     <div id="notification" class="fixed bottom-5 right-5 bg-red-600 text-white p-4 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50 max-w-sm">
         <h4 class="font-bold mb-1">เกิดข้อผิดพลาด</h4>
         <p id="notification-message" class="text-sm"></p>
@@ -178,7 +169,7 @@
             const editBtn = document.getElementById('edit-btn');
             const clearBtn = document.getElementById('clear-btn');
             const shortcutsContainer = document.getElementById('shortcuts-container');
-            // Modals
+            const addWorkflowContainer = document.getElementById('add-workflow-container');
             const clearModal = document.getElementById('clear-modal');
             const cancelClearBtn = document.getElementById('cancel-clear-btn');
             const confirmClearBtn = document.getElementById('confirm-clear-btn');
@@ -191,63 +182,113 @@
             let isEditMode = false;
             let tasksMasterData = [];
             let shortcutsMasterData = [];
+            let dailyData = {};
+            let activeTimer = null;
             let currentShortcutIndex = null;
 
             // --- Default & Available Data ---
             const availableIcons = ['fa-link', 'fa-shield-halved', 'fa-chart-line', 'fa-file-alt', 'fa-cogs', 'fa-database', 'fa-server', 'fa-cloud', 'fa-envelope', 'fa-folder-open', 'fa-globe', 'fa-print', 'fa-calculator', 'fa-camera', 'fa-video', 'fa-music'];
             const defaultTasksData = [
-                 { id: 1, title: 'Open Styline', tasks: [
-                    { name: 'เปิด Styline Daily report ใน Styline', link: '#' }, { name: 'เปิดแผนพิมพ์', link: '#' }, { name: 'เปลี่ยนชื่อไฟล์อัพเดทวันที่', link: '' }, { name: 'Refresh ไฟล์แผนพิมพ์', link: '' }
+                { id: 1, title: 'Open Styline', tasks: [
+                    { id: 101, name: 'เปิด Order Status Report ใน Styline', link: '' },
+                    { id: 102, name: 'เปลี่ยนชื่อไฟล์อัพเดทวันที่', link: '' },
+                    { id: 103, name: 'Refresh ไฟล์แผนพิมพ์', link: '' }
                 ]},
-                { id: 2, title: 'Open Power BI', tasks: [] },
-                { id: 3, title: 'Open BIS', tasks: [] },
-                { id: 4, title: 'Update ผลผลิตใน Power BI', tasks: [
-                    { name: 'Update ข้อมูลใน excel ผลผลิต', link: '#' }, { name: 'Refresh Power BI (1. GHCQ Production)', link: '#' }
+                { id: 2, title: 'Open Power BI', tasks: []},
+                { id: 3, title: 'Open BIS', tasks: []},
+                { id: 4, title: 'Update ผลผลิตใน Power bi', tasks: [
+                    { id: 401, name: 'Update ข้อมูลใน Excel ผลผลิต', link: '' },
+                    { id: 402, name: 'Refresh Power bi (1. GRCQ Production)', link: '' }
                 ]},
-                { id: 5, title: 'ส่งเมลผลผลิต', tasks: [ { name: 'อัพเดทผลผลิตวันที่', link: '' } ]},
+                { id: 5, title: 'ส่งเมลผลผลิต', tasks: []},
                 { id: 6, title: 'Update Order Status', tasks: [
-                    { name: 'เปิดไฟล์ Order Status จาก Styline', link: '#' }, { name: 'อัพเดท Order Status ด้วยไฟล์ excel แผนพิมพ์', link: '#' }, { name: 'อัพเดท Data order status.xlsx', link: '#' }, { name: 'Refresh Power BI (2. Order Status)', link: '#' }, { name: 'แคปภาพปรับ CU', link: '' }, { name: 'เปิดไฟล์ Order Report เอามาใส่ในแผนพิมพ์', link: '#' }
+                    { id: 601, name: 'เปิดไฟล์ Order Status จาก Styline', link: '' },
+                    { id: 602, name: 'อัพเดท Sheet Order Status ใน Excel แผนพิมพ์', link: '' },
+                    { id: 603, name: 'อัพเดท Data Order Status.xlsx', link: '' },
+                    { id: 604, name: 'Refresh Power bi (2. Order Status)', link: '' },
+                    { id: 605, name: 'ลบรายการในไฟล์ CU', link: '' },
+                    { id: 606, name: 'เปิดไฟล์ Order Report เอามาใส่ในแผนพิมพ์', link: '' }
                 ]},
-                { id: 7, title: 'Update JOB Status', tasks: [
-                    { name: 'เปิดไฟล์ Check Job เอามาใส่ในแผนพิมพ์ (Mon/Wed/Fri)', link: '#' }, { name: 'อัพเดท JobComplete และ ไม่ตรง order', link: '' }
+                { id: 7, title: 'Update JobStatus', tasks: [
+                    { id: 701, name: 'เปิดไฟล์ Check Job เอามาใส่ในแผนพิมพ์ (Mon/Wed/Fri)', link: '' },
+                    { id: 702, name: 'อัพเดท JobComplete และ ไม่ตรง order', link: '' }
                 ]},
-                { id: 8, title: 'Plan', tasks: [
-                    { name: 'เปลี่ยนชื่อไฟล์อัพเดทวันที่', link: '' }, { name: 'Refresh Stock Room', link: '' }, { name: 'Refresh Workbook Link', link: '' }, { name: 'ส่งเมลรายงานวันที่', link: '' }
+                { id: 8, title: 'Plan_Sales', tasks: [
+                    { id: 801, name: 'เปลี่ยนชื่อไฟล์อัพเดทวันที่', link: '' },
+                    { id: 802, name: 'Refresh Workbook Link', link: '' },
+                    { id: 803, name: 'อัพเดทรายงานขายวันที่', link: '' }
                 ]},
                 { id: 9, title: 'Auto Job', tasks: [
-                    { name: 'เปิด Job ใหม่', link: '#' }, { name: 'อัพเดทไฟล์ AutoJob.xlsx', link: '#' }, { name: 'Refresh Power BI (3. AutoJob)', link: '#' }, { name: 'เอา Job ใส่แผนพิมพ์', link: '' }
+                    { id: 901, name: 'เปิด Job ใหม่', link: '' },
+                    { id: 902, name: 'อัพเดทไฟล์ AutoJob.xlsx', link: '' },
+                    { id: 903, name: 'Refresh Power bi (3. AutoJob)', link: '' },
+                    { id: 904, name: 'เอา Job ใส่แผนพิมพ์', link: '' }
                 ]},
                 { id: 10, title: 'เตรียมไฟล์ก่อน Upload', tasks: [
-                    { name: 'เช็ค Job p', link: '' }, { name: 'เตรียม Planning + ตัวรีด', link: '' }, { name: 'Update Stock บ้าน', link: '' }, { name: 'Update CF', link: '' }, { name: 'Update แบบเหมือน', link: '' }, { name: 'ตรวจสอบไฟล์', link: '' }
+                    { id: 1001, name: 'Check Job p', link: '' },
+                    { id: 1002, name: 'Check Ink + ตัวรีด', link: '' },
+                    { id: 1003, name: 'Update Stock บ้าน', link: '' },
+                    { id: 1004, name: 'Update CF', link: '' },
+                    { id: 1005, name: 'Update แผนเหมือนสีอื่น', link: '' },
+                    { id: 1006, name: 'ปากกาแผนเหมือน', link: '' }
                 ]},
                 { id: 11, title: 'Uplaod แผน', tasks: [
-                    { name: 'ส่งไฟล์เข้า Connect Flexo โรง 4', link: '#' }, { name: 'Upload แบบลง Job Planning', link: '#' }, { name: 'Calculation + utility check', link: '#' }, { name: 'อัพเดท google sheet ให้ทีมคิด', link: '#' }, { name: 'เช็คลง Drive กลาง', link: '#' }
+                    { id: 1101, name: 'ส่งไฟล์เข้า Connect Flexo โรง 4', link: '' },
+                    { id: 1102, name: 'Upload แบบลง Job Planning', link: '' },
+                    { id: 1103, name: 'Calculation + Utility แผน', link: '' },
+                    { id: 1104, name: 'อัพเดท google sheet ให้ทีมคิด', link: '' },
+                    { id: 1105, name: 'เช็คลง Drive กลาง', link: '' }
                 ]},
-                { id: 12, title: 'ทบทวน', tasks: [ { name: 'เช็คยอด CI', link: '' }, { name: 'ปล่อยแผน', link: '' } ]},
+                { id: 12, title: 'ทบทวน', tasks: [
+                    { id: 1201, name: 'ปากกาแผน CI', link: '' },
+                    { id: 1202, name: 'ปล่อยแผน', link: '' }
+                ]},
                 { id: 15, title: 'Plan_Sales', tasks: [
-                    { name: 'เปิดแผนพิมพ์', link: '#' }, { name: 'Refresh Workbook Link', link: '' }, { name: 'Refresh Stock Room', link: '' }, { name: 'อัพเดทตาราง', link: '' }, { name: 'เช็คแผน', link: '' }, { name: 'เช็คสินค้าใหม่', link: '' }, { name: 'ส่ง Mail ขาย', link: '' }
+                    { id: 1501, name: 'เปิดแผนพิมพ์', link: '' },
+                    { id: 1502, name: 'Refresh CF', link: '' },
+                    { id: 1503, name: 'Refresh Workbook Link', link: '' },
+                    { id: 1504, name: 'Refresh Stock Room', link: '' },
+                    { id: 1505, name: 'อัพเดทตารางวางบิล', link: '' },
+                    { id: 1506, name: 'เช็คแผน', link: '' },
+                    { id: 1507, name: 'เช็คสินค้าพิเศษ', link: '' },
+                    { id: 1508, name: 'ส่ง Mail ขาย', link: '' }
                 ]},
                 { id: 16, title: 'Plan_Machine', tasks: [
-                    { name: 'Refresh แผนผลิต', link: '' }, { name: 'Update Workbook Link', link: '' }, { name: 'เปิดแผนพิมพ์', link: '#' }, { name: 'อัพเดทชีท', link: '' }, { name: 'ส่ง Mail แผนผลิต', link: '' }
+                    { id: 1601, name: 'Refresh แผนผลิต', link: '' },
+                    { id: 1602, name: 'Update Workbook Link', link: '' },
+                    { id: 1603, name: 'เปิดแผนพิมพ์', link: '' },
+                    { id: 1604, name: 'อัพเดทชีท', link: '' },
+                    { id: 1605, name: 'ส่ง Mail แผนผลิต', link: '' }
                 ]}
             ];
             const defaultShortcutsData = [
-                { id: 1, name: 'Connect VPN', link: 'C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe', icon: 'fa-shield-halved' },
-                { id: 2, name: 'Power BI', link: '#', icon: 'fa-chart-line' },
-                { id: 3, name: 'Styline', link: '#', icon: 'fa-file-alt' },
-                { id: 4, name: 'GRCQ', link: '#', icon: 'fa-cogs' }
+                { id: 1, name: 'Connect VPN', link: 'C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe', icon: 'fa-shield-halved' }
             ];
 
-            // --- Data Loading ---
+            // --- Data Loading & Saving ---
             function loadMasterData() {
                 const savedTasks = localStorage.getItem('tasksMasterData');
                 tasksMasterData = savedTasks ? JSON.parse(savedTasks) : defaultTasksData;
-
                 const savedShortcuts = localStorage.getItem('shortcutsMasterData');
                 shortcutsMasterData = savedShortcuts ? JSON.parse(savedShortcuts) : defaultShortcutsData;
             }
 
-            // --- Helper function ---
+            function saveMasterData() {
+                localStorage.setItem('tasksMasterData', JSON.stringify(tasksMasterData));
+                localStorage.setItem('shortcutsMasterData', JSON.stringify(shortcutsMasterData));
+            }
+
+            function loadDailyData() {
+                const dateKey = `dailyData-${formatDate(currentDate)}`;
+                dailyData = JSON.parse(localStorage.getItem(dateKey) || '{}');
+            }
+
+            function saveDailyData() {
+                const dateKey = `dailyData-${formatDate(currentDate)}`;
+                localStorage.setItem(dateKey, JSON.stringify(dailyData));
+            }
+
+            // --- Helper Functions ---
             function formatDate(date) {
                 const d = new Date(date);
                 let month = '' + (d.getMonth() + 1);
@@ -258,7 +299,15 @@
                 return [year, month, day].join('-');
             }
 
-            // ** NEW: Notification Function **
+            function formatTime(ms) {
+                const totalSeconds = Math.floor(ms / 1000);
+                const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+                const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+                const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+                const tenths = Math.floor((ms % 1000) / 100);
+                return `${hours}:${minutes}:${seconds}.${tenths}`;
+            }
+
             function showNotification(message) {
                 const notification = document.getElementById('notification');
                 const messageEl = document.getElementById('notification-message');
@@ -266,10 +315,122 @@
                 notification.classList.remove('opacity-0', 'pointer-events-none');
                 setTimeout(() => {
                     notification.classList.add('opacity-0', 'pointer-events-none');
-                }, 6000); // Hide after 6 seconds
+                }, 6000);
+            }
+            
+            // --- Time Tracking ---
+            function stopActiveTimer(save = true) {
+                if (activeTimer) {
+                    clearInterval(activeTimer.intervalId);
+                    if (save) {
+                        const elapsed = Date.now() - activeTimer.startTime;
+                        const currentTotal = dailyData[activeTimer.taskId]?.time || 0;
+                        if (!dailyData[activeTimer.taskId]) dailyData[activeTimer.taskId] = {};
+                        dailyData[activeTimer.taskId].time = currentTotal + elapsed;
+                        saveDailyData();
+                    }
+                    const oldTimerTaskId = activeTimer.taskId;
+                    activeTimer = null;
+                    const timerBtnIcon = document.querySelector(`.timer-btn[data-task-id="${oldTimerTaskId}"] i`);
+                    if (timerBtnIcon) timerBtnIcon.className = 'fas fa-play-circle text-green-500';
+                }
             }
 
-            // --- Render Functions ---
+            function startTimer(taskId) {
+                stopActiveTimer();
+                
+                activeTimer = {
+                    taskId,
+                    startTime: Date.now(),
+                    intervalId: setInterval(() => {
+                        const elapsed = Date.now() - activeTimer.startTime;
+                        const currentTotal = dailyData[taskId]?.time || 0;
+                        const timerEl = document.querySelector(`.timer-display[data-task-id="${taskId}"]`);
+                        if (timerEl) timerEl.textContent = formatTime(currentTotal + elapsed);
+                    }, 100)
+                };
+                const timerBtnIcon = document.querySelector(`.timer-btn[data-task-id="${taskId}"] i`);
+                if (timerBtnIcon) timerBtnIcon.className = 'fas fa-pause-circle text-red-500';
+            }
+
+            // --- Main Render Logic ---
+            function renderAll(date) {
+                stopActiveTimer(false);
+                currentDate = date;
+                datePicker.value = formatDate(date);
+                loadDailyData();
+                renderShortcuts();
+                renderTasks();
+                updateProgress();
+            }
+
+            function renderTasks() {
+                taskGrid.innerHTML = '';
+                addWorkflowContainer.innerHTML = '';
+
+                tasksMasterData.forEach(workflow => {
+                    const card = document.createElement('div');
+                    card.className = 'task-card bg-white rounded-xl shadow-sm p-5 flex flex-col';
+                    card.dataset.workflowId = workflow.id;
+
+                    let tasksHtml = (workflow.tasks || []).map(task => {
+                        const isChecked = dailyData[task.id]?.checked || false;
+                        const timeSpent = dailyData[task.id]?.time || 0;
+                        const isTimerRunning = activeTimer && activeTimer.taskId === task.id;
+
+                        if (isEditMode) {
+                            return `
+                                <div class="task-item-edit flex items-center gap-2 mb-2">
+                                    <div class="flex-grow">
+                                        <input type="text" value="${task.name}" data-type="name" data-task-id="${task.id}" class="w-full p-1 border rounded mb-1" placeholder="Task Name">
+                                        <input type="text" value="${task.link || ''}" data-type="link" data-task-id="${task.id}" class="w-full p-1 border rounded text-sm text-gray-500" placeholder="File Path or URL">
+                                    </div>
+                                    <button class="remove-task-btn edit-action-btn" data-workflow-id="${workflow.id}" data-task-id="${task.id}"><i class="fas fa-trash-alt"></i></button>
+                                </div>`;
+                        } else {
+                            const linkElement = (task.link && task.link !== '#')
+                                ? `<button class="task-link-btn hover:underline text-left" data-link="${task.link}">${task.name} <i class="fas ${task.link.startsWith('http') ? 'fa-external-link-alt' : 'fa-folder-open'} fa-xs opacity-60"></i></button>`
+                                : task.name;
+
+                            return `
+                                <div class="task-item flex items-center mb-2 last:mb-0">
+                                    <input type="checkbox" id="task-${task.id}" data-task-id="${task.id}" class="h-5 w-5 rounded border-gray-300 text-green-500 focus:ring-green-500 cursor-pointer flex-shrink-0" ${isChecked ? 'checked' : ''}>
+                                    <label for="task-${task.id}" class="ml-3 text-gray-700 cursor-pointer flex-grow">${linkElement}</label>
+                                    <div class="timer-controls flex items-center gap-1 text-xs text-gray-500 ml-2">
+                                        <span class="timer-display font-mono" data-task-id="${task.id}">${formatTime(timeSpent)}</span>
+                                        <button class="timer-btn" data-task-id="${task.id}">
+                                            <i class="fas ${isTimerRunning ? 'fa-pause-circle text-red-500' : 'fa-play-circle text-green-500'}"></i>
+                                        </button>
+                                    </div>
+                                </div>`;
+                        }
+                    }).join('');
+                    
+                    if (isEditMode) {
+                        tasksHtml += `<button class="add-task-btn mt-2 text-sm text-blue-500 hover:underline w-full text-left" data-workflow-id="${workflow.id}"><i class="fas fa-plus mr-1"></i> เพิ่ม Task</button>`;
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            ${isEditMode 
+                                ? `<input type="text" class="text-lg font-bold p-1 border rounded w-full" value="${workflow.title}" data-workflow-id="${workflow.id}" data-type="workflow-title">`
+                                : `<h3 class="text-lg font-bold text-gray-900">${workflow.title}</h3>`
+                            }
+                            ${isEditMode ? `<button class="remove-workflow-btn edit-action-btn ml-2" data-workflow-id="${workflow.id}"><i class="fas fa-trash-alt"></i></button>` : ''}
+                        </div>
+                        ${!isEditMode && workflow.tasks && workflow.tasks.length > 0 ? `
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                            <div id="progress-bar-${workflow.id}" class="progress-bar-fg h-2.5 rounded-full"></div>
+                        </div>` : ''}
+                        <div class="task-list flex-grow">${tasksHtml}</div>`;
+                    taskGrid.appendChild(card);
+                });
+
+                if (isEditMode) {
+                    addWorkflowContainer.innerHTML = `<button id="add-workflow-btn" class="shortcut-btn w-full justify-center text-blue-500 border-blue-200 hover:bg-blue-50 py-3"><i class="fas fa-plus mr-2"></i>เพิ่ม Workflow ใหม่</button>`;
+                }
+            }
+            
             function renderShortcuts() {
                 shortcutsContainer.innerHTML = '';
                 shortcutsMasterData.forEach((shortcut, index) => {
@@ -277,9 +438,7 @@
                         const editDiv = document.createElement('div');
                         editDiv.className = 'flex items-center gap-2 p-2 border rounded-lg';
                         editDiv.innerHTML = `
-                            <button class="change-icon-btn shortcut-btn !p-2" data-shortcut-index="${index}">
-                                <i class="fas ${shortcut.icon || 'fa-link'}"></i>
-                            </button>
+                            <button class="change-icon-btn shortcut-btn !p-2" data-shortcut-index="${index}"><i class="fas ${shortcut.icon || 'fa-link'}"></i></button>
                             <div class="flex flex-col gap-1">
                                 <input type="text" value="${shortcut.name}" data-type="name" data-shortcut-index="${index}" class="p-1 border rounded text-sm" placeholder="Shortcut Name">
                                 <input type="text" value="${shortcut.link}" data-type="link" data-shortcut-index="${index}" class="p-1 border rounded text-xs text-gray-500" placeholder="File Path or URL">
@@ -292,15 +451,11 @@
                         button.className = 'shortcut-btn rounded-lg px-4 py-2 font-semibold';
                         button.dataset.link = shortcut.link;
                         button.innerHTML = `<i class="fas ${shortcut.icon || 'fa-link'} mr-2"></i>${shortcut.name}`;
-                        
-                        // ** UPDATED: Add async click handler **
                         button.addEventListener('click', async () => {
                             const link = button.dataset.link;
                             if (link && link !== '#') {
                                 const result = await window.electronAPI.openFile(link);
-                                if (!result.success) {
-                                    showNotification(`ไม่สามารถเปิด Shortcut ได้: ${result.error}`);
-                                }
+                                if (!result.success) showNotification(`ไม่สามารถเปิด Shortcut ได้: ${result.error}`);
                             }
                         });
                         shortcutsContainer.appendChild(button);
@@ -315,119 +470,19 @@
                 }
             }
 
-            function renderTasks(date) {
-                currentDate = date;
-                taskGrid.innerHTML = '';
-
-                tasksMasterData.forEach(workflow => {
-                    const card = document.createElement('div');
-                    card.className = 'task-card bg-white rounded-xl shadow-sm p-5 flex flex-col';
-                    card.dataset.workflowId = workflow.id;
-
-                    let tasksHtml = workflow.tasks.map((task, index) => {
-                        const taskId = `task-${workflow.id}-${index}`;
-                        if (isEditMode) {
-                            return `
-                                <div class="task-item-edit flex items-center gap-2 mb-2">
-                                    <div class="flex-grow">
-                                        <input type="text" value="${task.name}" data-type="name" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded mb-1" placeholder="Task Name">
-                                        <input type="text" value="${task.link || ''}" data-type="link" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded text-sm text-gray-500" placeholder="File Path or URL">
-                                    </div>
-                                    <button class="remove-task-btn edit-action-btn" data-workflow-id="${workflow.id}" data-task-index="${index}"><i class="fas fa-trash-alt"></i></button>
-                                </div>`;
-                        } else {
-                            const linkElement = (task.link && task.link !== '#')
-                                ? `<button class="task-link-btn hover:underline text-left" data-link="${task.link}">${task.name} <i class="fas ${task.link.startsWith('http') ? 'fa-external-link-alt' : 'fa-folder-open'} fa-xs opacity-60"></i></button>`
-                                : task.name;
-
-                            return `
-                                <div class="task-item flex items-center mb-2 last:mb-0">
-                                    <input type="checkbox" id="${taskId}" class="h-5 w-5 rounded border-gray-300 text-green-500 focus:ring-green-500 cursor-pointer flex-shrink-0">
-                                    <label for="${taskId}" class="ml-3 text-gray-700 cursor-pointer">${linkElement}</label>
-                                </div>`;
-                        }
-                    }).join('');
-                    
-                    if (isEditMode) {
-                        tasksHtml += `<button class="add-task-btn mt-2 text-sm text-blue-500 hover:underline w-full text-left" data-workflow-id="${workflow.id}"><i class="fas fa-plus mr-1"></i> เพิ่ม Task</button>`;
-                    }
-                    
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-lg font-bold text-gray-900">${workflow.id}. ${workflow.title}</h3>
-                            ${!isEditMode ? `<span id="progress-text-${workflow.id}" class="font-semibold text-gray-500">0%</span>` : ''}
-                        </div>
-                        ${!isEditMode && workflow.tasks.length > 0 ? `
-                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                            <div id="progress-bar-${workflow.id}" class="progress-bar-fg h-2.5 rounded-full"></div>
-                        </div>` : ''}
-                        <div class="task-list flex-grow">${tasksHtml}</div>`;
-                    taskGrid.appendChild(card);
-                });
-
-                if (!isEditMode) {
-                    const allCheckboxes = taskGrid.querySelectorAll('.task-item input[type="checkbox"]');
-                    allCheckboxes.forEach(checkbox => {
-                        checkbox.addEventListener('change', () => {
-                            updateProgress();
-                            saveProgress();
-                        });
-                    });
-                    loadProgress();
-                    updateProgress();
-                }
-            }
-            
-            function renderAll(date) {
-                renderShortcuts();
-                renderTasks(date);
-            }
-
-            // --- Progress Logic ---
-            function saveProgress() {
-                const dateKey = `dailyTaskProgress-${formatDate(currentDate)}`;
-                const progressState = {};
-                const allCheckboxes = taskGrid.querySelectorAll('.task-item input[type="checkbox"]');
-                allCheckboxes.forEach(checkbox => {
-                    progressState[checkbox.id] = checkbox.checked;
-                });
-                localStorage.setItem(dateKey, JSON.stringify(progressState));
-            }
-
-            function loadProgress() {
-                const dateKey = `dailyTaskProgress-${formatDate(currentDate)}`;
-                const savedProgress = localStorage.getItem(dateKey);
-                if (savedProgress) {
-                    const progressState = JSON.parse(savedProgress);
-                    const allCheckboxes = taskGrid.querySelectorAll('.task-item input[type="checkbox"]');
-                    allCheckboxes.forEach(checkbox => {
-                        if (progressState[checkbox.id]) {
-                            checkbox.checked = true;
-                        }
-                    });
-                }
-            }
-
             function updateProgress() {
                 let totalTasks = 0;
                 let completedTasks = 0;
-
                 tasksMasterData.forEach(workflow => {
-                    if (workflow.tasks.length === 0) return;
-                    const workflowCard = taskGrid.querySelector(`.task-card[data-workflow-id="${workflow.id}"]`);
-                    if (!workflowCard) return;
-                    
-                    const workflowCheckboxes = workflowCard.querySelectorAll('input[type="checkbox"]');
-                    const completedInWorkflow = Array.from(workflowCheckboxes).filter(cb => cb.checked).length;
-                    const totalInWorkflow = workflowCheckboxes.length;
-                    totalTasks += totalInWorkflow;
-                    completedTasks += completedInWorkflow;
-
-                    const percentage = totalInWorkflow > 0 ? (completedInWorkflow / totalInWorkflow) * 100 : 0;
-                    const progressBar = workflowCard.querySelector(`#progress-bar-${workflow.id}`);
-                    const progressText = workflowCard.querySelector(`#progress-text-${workflow.id}`);
+                    (workflow.tasks || []).forEach(task => {
+                        totalTasks++;
+                        if (dailyData[task.id]?.checked) completedTasks++;
+                    });
+                    const workflowTasks = workflow.tasks || [];
+                    const completedWorkflowTasks = workflowTasks.filter(t => dailyData[t.id]?.checked).length;
+                    const percentage = workflowTasks.length > 0 ? (completedWorkflowTasks / workflowTasks.length) * 100 : 0;
+                    const progressBar = document.getElementById(`progress-bar-${workflow.id}`);
                     if (progressBar) progressBar.style.width = `${percentage}%`;
-                    if (progressText) progressText.textContent = `${Math.round(percentage)}%`;
                 });
 
                 document.getElementById('main-progress-details').textContent = `${completedTasks}/${totalTasks} Tasks`;
@@ -440,148 +495,118 @@
             function handleEditToggle() {
                 isEditMode = !isEditMode;
                 if (isEditMode) {
+                    stopActiveTimer(false);
                     editBtn.innerHTML = `<i class="fas fa-save mr-2"></i>บันทึก`;
                     editBtn.classList.replace('bg-blue-500', 'bg-green-500');
                 } else {
-                    const taskInputs = taskGrid.querySelectorAll('.task-item-edit input');
-                    taskInputs.forEach(input => {
-                        const workflowId = parseInt(input.dataset.workflowId);
-                        const taskIndex = parseInt(input.dataset.taskIndex);
-                        const type = input.dataset.type;
-                        const workflow = tasksMasterData.find(w => w.id === workflowId);
-                        if (workflow && workflow.tasks[taskIndex]) {
-                            workflow.tasks[taskIndex][type] = input.value;
+                    // Save changes from inputs
+                    document.querySelectorAll('input[data-workflow-id][data-type="workflow-title"]').forEach(input => {
+                        const workflow = tasksMasterData.find(w => w.id == input.dataset.workflowId);
+                        if (workflow) workflow.title = input.value;
+                    });
+                    document.querySelectorAll('input[data-task-id]').forEach(input => {
+                        const task = tasksMasterData.flatMap(w => w.tasks || []).find(t => t.id == input.dataset.taskId);
+                        if (task) task[input.dataset.type] = input.value;
+                    });
+                    document.querySelectorAll('input[data-shortcut-index]').forEach(input => {
+                        if (shortcutsMasterData[input.dataset.shortcutIndex]) {
+                             shortcutsMasterData[input.dataset.shortcutIndex][input.dataset.type] = input.value;
                         }
                     });
-                    localStorage.setItem('tasksMasterData', JSON.stringify(tasksMasterData));
-
-                    const shortcutInputs = shortcutsContainer.querySelectorAll('input');
-                    shortcutInputs.forEach(input => {
-                        const shortcutIndex = parseInt(input.dataset.shortcutIndex);
-                        const type = input.dataset.type;
-                        if (shortcutsMasterData[shortcutIndex]) {
-                             shortcutsMasterData[shortcutIndex][type] = input.value;
-                        }
-                    });
-                    localStorage.setItem('shortcutsMasterData', JSON.stringify(shortcutsMasterData));
-
+                    saveMasterData();
                     editBtn.innerHTML = `<i class="fas fa-pencil-alt mr-2"></i>แก้ไขรายการ`;
                     editBtn.classList.replace('bg-green-500', 'bg-blue-500');
                 }
                 renderAll(currentDate);
             }
-
-            function openIconPicker(index) {
-                currentShortcutIndex = index;
-                iconPickerGrid.innerHTML = '';
-                availableIcons.forEach(iconClass => {
-                    const item = document.createElement('div');
-                    item.className = 'icon-picker-item';
-                    item.dataset.iconClass = iconClass;
-                    item.innerHTML = `<i class="fas ${iconClass} fa-lg"></i>`;
-                    iconPickerGrid.appendChild(item);
-                });
-                iconPickerModal.classList.remove('opacity-0', 'pointer-events-none');
-                iconPickerModal.querySelector('.modal-box').classList.remove('scale-95');
-            }
-
-            function closeIconPicker() {
-                iconPickerModal.classList.add('opacity-0', 'pointer-events-none');
-                iconPickerModal.querySelector('.modal-box').classList.add('scale-95');
-            }
-
-            function showClearModal() {
-                clearModal.classList.remove('opacity-0', 'pointer-events-none');
-                clearModal.querySelector('.modal-box').classList.remove('scale-95');
-            }
-
-            function hideClearModal() {
-                clearModal.classList.add('opacity-0', 'pointer-events-none');
-                clearModal.querySelector('.modal-box').classList.add('scale-95');
-            }
-
-            function handleClearTasks() {
-                const dateKey = `dailyTaskProgress-${formatDate(currentDate)}`;
-                localStorage.removeItem(dateKey);
-                hideClearModal();
-                renderTasks(currentDate);
-            }
-
-            // --- Event Delegation for Dynamic Elements ---
-            document.addEventListener('click', async function(e) { // ** Add async here **
-                if (e.target && e.target.closest('#add-shortcut-btn')) {
-                    shortcutsMasterData.push({ id: Date.now(), name: 'New Shortcut', link: '', icon: 'fa-link' });
-                    renderShortcuts();
+            
+            // --- Event Delegation ---
+            document.addEventListener('change', function(e) {
+                if (e.target.matches('input[type="checkbox"]')) {
+                    const taskId = parseInt(e.target.dataset.taskId);
+                    if (!dailyData[taskId]) dailyData[taskId] = {};
+                    dailyData[taskId].checked = e.target.checked;
+                    saveDailyData();
+                    updateProgress();
                 }
-                if (e.target && e.target.closest('.remove-shortcut-btn')) {
-                    const index = e.target.closest('.remove-shortcut-btn').dataset.shortcutIndex;
-                    shortcutsMasterData.splice(index, 1);
-                    renderShortcuts();
-                }
-                if (e.target && e.target.closest('.change-icon-btn')) {
-                    const index = e.target.closest('.change-icon-btn').dataset.shortcutIndex;
-                    openIconPicker(index);
-                }
-                if (e.target && e.target.closest('.icon-picker-item')) {
-                    const iconClass = e.target.closest('.icon-picker-item').dataset.iconClass;
-                    if (currentShortcutIndex !== null) {
-                        shortcutsMasterData[currentShortcutIndex].icon = iconClass;
-                        renderShortcuts();
-                        closeIconPicker();
+            });
+
+            document.addEventListener('click', async function(e) {
+                const target = e.target;
+                const closest = (selector) => target.closest(selector);
+
+                if (closest('.timer-btn')) {
+                    const taskId = parseInt(closest('.timer-btn').dataset.taskId);
+                    if (activeTimer && activeTimer.taskId === taskId) {
+                        stopActiveTimer();
+                    } else {
+                        startTimer(taskId);
                     }
                 }
-                if (e.target && e.target.classList.contains('add-task-btn')) {
-                    const workflowId = parseInt(e.target.dataset.workflowId);
-                    const workflow = tasksMasterData.find(w => w.id === workflowId);
-                    if(workflow) {
-                        workflow.tasks.push({ name: 'New Task', link: '' });
-                        renderTasks(currentDate);
-                    }
-                }
-                if (e.target && e.target.closest('.remove-task-btn')) {
-                    const button = e.target.closest('.remove-task-btn');
-                    const workflowId = parseInt(button.dataset.workflowId);
-                    const taskIndex = parseInt(button.dataset.taskIndex);
-                    const workflow = tasksMasterData.find(w => w.id === workflowId);
-                    if(workflow) {
-                        workflow.tasks.splice(taskIndex, 1);
-                        renderTasks(currentDate);
-                    }
-                }
-                if (e.target && e.target.closest('.task-link-btn')) {
-                    const button = e.target.closest('.task-link-btn');
-                    const link = button.dataset.link;
+
+                if (closest('.task-link-btn')) {
+                    const link = closest('.task-link-btn').dataset.link;
                     if (link && link !== '#') {
                         const result = await window.electronAPI.openFile(link);
-                        if (!result.success) {
-                            showNotification(`ไม่สามารถเปิด Task link ได้: ${result.error}`);
+                        if (!result.success) showNotification(`ไม่สามารถเปิด Task link ได้: ${result.error}`);
+                    }
+                }
+
+                if (isEditMode) {
+                    if (closest('#add-shortcut-btn')) {
+                        shortcutsMasterData.push({ id: Date.now(), name: 'New Shortcut', link: '', icon: 'fa-link' });
+                        renderShortcuts();
+                    }
+                    if (closest('.remove-shortcut-btn')) {
+                        shortcutsMasterData.splice(closest('.remove-shortcut-btn').dataset.shortcutIndex, 1);
+                        renderShortcuts();
+                    }
+                    if (closest('.add-task-btn')) {
+                        const workflowId = parseInt(closest('.add-task-btn').dataset.workflowId);
+                        const workflow = tasksMasterData.find(w => w.id === workflowId);
+                        if(workflow) {
+                            if(!workflow.tasks) workflow.tasks = [];
+                            workflow.tasks.push({ id: Date.now(), name: 'New Task', link: '' });
+                            renderTasks();
                         }
+                    }
+                    if (closest('.remove-task-btn')) {
+                        const workflowId = parseInt(closest('.remove-task-btn').dataset.workflowId);
+                        const taskId = parseInt(closest('.remove-task-btn').dataset.taskId);
+                        const workflow = tasksMasterData.find(w => w.id === workflowId);
+                        if(workflow) {
+                            workflow.tasks = workflow.tasks.filter(t => t.id !== taskId);
+                            renderTasks();
+                        }
+                    }
+                    if (closest('#add-workflow-btn')) {
+                        tasksMasterData.push({ id: Date.now(), title: 'New Workflow', tasks: [] });
+                        renderTasks();
+                    }
+                    if (closest('.remove-workflow-btn')) {
+                        const workflowId = parseInt(closest('.remove-workflow-btn').dataset.workflowId);
+                        tasksMasterData = tasksMasterData.filter(w => w.id !== workflowId);
+                        renderTasks();
                     }
                 }
             });
 
             // --- Initial Setup ---
-            datePicker.addEventListener('change', (event) => {
-                const [year, month, day] = event.target.value.split('-').map(Number);
-                const selectedDate = new Date(year, month - 1, day);
-                renderAll(selectedDate);
-            });
-            todayBtn.addEventListener('click', () => {
-                const today = new Date();
-                datePicker.value = formatDate(today);
-                renderAll(today);
-            });
+            datePicker.addEventListener('change', (e) => renderAll(new Date(e.target.value)));
+            todayBtn.addEventListener('click', () => renderAll(new Date()));
             editBtn.addEventListener('click', handleEditToggle);
-            clearBtn.addEventListener('click', showClearModal);
-            cancelClearBtn.addEventListener('click', hideClearModal);
-            confirmClearBtn.addEventListener('click', handleClearTasks);
-            closeIconPickerBtn.addEventListener('click', closeIconPicker);
+            clearBtn.addEventListener('click', () => clearModal.classList.remove('opacity-0', 'pointer-events-none'));
+            cancelClearBtn.addEventListener('click', () => clearModal.classList.add('opacity-0', 'pointer-events-none'));
+            confirmClearBtn.addEventListener('click', () => {
+                dailyData = {};
+                saveDailyData();
+                clearModal.classList.add('opacity-0', 'pointer-events-none');
+                renderAll(currentDate);
+            });
 
             function initialize() {
                 loadMasterData();
-                const today = new Date();
-                datePicker.value = formatDate(today);
-                renderAll(today);
+                renderAll(new Date());
             }
 
             initialize();
