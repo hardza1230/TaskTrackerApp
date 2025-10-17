@@ -10,68 +10,103 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
+        :root {
+            --bg-main: #f8f9fa;
+            --bg-sidebar: #ffffff;
+            --bg-header: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #718096;
+            --primary: #6366f1;
+            --primary-light: #e0e7ff;
+            --accent: #14b8a6;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+        }
+        @keyframes card-enter {
+            from { opacity: 0; transform: translateY(15px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes modal-enter {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
         body {
             font-family: 'Sarabun', 'Inter', sans-serif;
-            background-color: #f0f9ff; /* blue-50 */
-            overflow-x: hidden; /* Prevent horizontal scroll */
-        }
-        .progress-bar-fg {
-            background-color: #22c55e; /* green-500 */
-            transition: width 0.3s ease-in-out, background 0.3s ease-in-out;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            overflow-x: hidden;
         }
         .task-card {
-            transition: all 0.2s ease-in-out;
-            border: 1px solid #e5e7eb; /* gray-200 */
+            background-color: var(--bg-card);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #e5e7eb;
             align-self: start;
+            box-shadow: var(--shadow);
+            animation: card-enter 0.5s ease-out backwards;
+            position: relative;
         }
+        .task-card:nth-child(2) { animation-delay: 0.05s; }
+        .task-card:nth-child(3) { animation-delay: 0.1s; }
+        .task-card:nth-child(4) { animation-delay: 0.15s; }
+        .task-card:nth-child(5) { animation-delay: 0.2s; }
+        .task-card:nth-child(6) { animation-delay: 0.25s; }
         .task-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .task-item input:checked + label {
-            text-decoration: line-through;
-            color: #6b7280; /* gray-500 */
-        }
-        .task-item input:checked + label a, .task-item input:checked + label button {
-            color: #6b7280;
-        }
-        .task-link-btn {
-            background: none;
-            border: none;
-            padding: 0;
-            color: #2563eb; /* blue-600 */
-            cursor: pointer;
-            text-align: left;
-        }
-        .shortcut-btn {
-            background-color: #ffffff;
-            color: #374151; /* gray-700 */
-            border: 1px solid #d1d5db; /* gray-300 */
-            transition: all 0.2s ease-in-out;
-            width: 100%; 
-            text-align: left;
-        }
-        .shortcut-btn:hover {
-            background-color: #f9fafb; /* gray-50 */
-            border-color: #9ca3af; /* gray-400 */
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
         }
         .modal-overlay {
+            opacity: 0;
+            pointer-events: none;
             transition: opacity 0.2s ease-in-out;
             z-index: 50;
         }
-        .modal-box {
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-overlay.active .modal-box {
+            animation: modal-enter 0.3s ease-out forwards;
+        }
+        .progress-bar-fg { background-color: var(--accent); transition: width 0.4s ease-in-out, background 0.4s ease-in-out; }
+        .task-item input:checked + label { text-decoration: line-through; color: var(--text-secondary); }
+        .task-item input:checked + label .task-link-btn { color: var(--text-secondary); }
+        .task-link-btn { background: none; border: none; padding: 0; color: var(--primary); cursor: pointer; text-align: left; }
+        .shortcut-btn { background-color: #ffffff; color: #374151; border: 1px solid #d1d5db; transition: all 0.2s ease-in-out; width: 100%; text-align: left; }
+        .shortcut-btn:hover { background-color: #f9fafb; border-color: #9ca3af; transform: translateY(-2px); }
+        .modal-box { transition: all 0.2s ease-in-out; }
+        .edit-action-btn { background: none; border: none; cursor: pointer; color: #9ca3af; transition: color 0.2s; }
+        .edit-action-btn:hover { color: var(--danger); }
+        .drag-handle { cursor: grab; color: #9ca3af; }
+        .sortable-ghost { opacity: 0.4; background: #cce7ff; }
+        .sortable-chosen { cursor: grabbing; }
+        .sidebar { width: 18rem; transition: width 0.3s ease-in-out; }
+        .sidebar.collapsed { width: 5rem; }
+        .sidebar-link-text { opacity: 1; transition: opacity 0.2s ease-in-out; }
+        .sidebar.collapsed .sidebar-link-text { opacity: 0; width: 0; pointer-events: none; }
+        .card-action-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f3f4f6;
+            color: #6b7280;
             transition: all 0.2s ease-in-out;
-        }
-        .edit-action-btn {
-            background: none;
-            border: none;
             cursor: pointer;
-            color: #9ca3af; /* gray-400 */
+            z-index: 10;
         }
-        .edit-action-btn:hover {
-            color: #ef4444; /* red-500 */
+        .card-action-button:hover {
+            background-color: #e5e7eb;
+            transform: scale(1.1);
         }
+        .run-macro-btn:hover { color: var(--primary); }
+        .delete-workflow-btn:hover { color: var(--danger); }
         .icon-picker-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -83,105 +118,30 @@
             border-radius: 0.5rem; cursor: pointer; transition: background-color 0.2s;
         }
         .icon-picker-item:hover { background-color: #f3f4f6; }
-        .drag-handle { cursor: grab; color: #9ca3af; }
-        .task-item-edit { cursor: grab; }
-        .sortable-ghost { opacity: 0.4; background: #cce7ff; }
-        .sortable-chosen { cursor: grabbing; }
-
-        .sidebar {
-            width: 18rem; /* 288px */
-            transition: width 0.3s ease-in-out;
-        }
-        .sidebar.collapsed {
-            width: 5rem; /* 80px */
-        }
-        .sidebar-link-text {
-            opacity: 1;
-            transition: opacity 0.2s ease-in-out;
-        }
-        .sidebar.collapsed .sidebar-link-text {
-            opacity: 0;
-            width: 0;
-            pointer-events: none;
-        }
-        
-        .note-board {
-            position: relative;
-            width: 100%;
-            min-height: 80vh;
-            border: 2px dashed #d1d5db;
-            border-radius: 0.5rem;
-            background-color: #f9fafb;
-        }
-        .post-it {
-            position: absolute;
-            width: 250px;
-            height: 250px;
-            padding: 1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 0.25rem;
-            display: flex;
-            flex-direction: column;
-            transition: opacity 0.3s, transform 0.3s;
-        }
-        .post-it-header {
-            padding-bottom: 0.5rem;
-            cursor: grab;
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-        .post-it-header button {
-            background: none; border: none; cursor: pointer; color: rgba(0,0,0,0.4);
-        }
-        .post-it-content {
-            flex-grow: 1;
-            margin-top: 0.5rem;
-            font-size: 1rem;
-            outline: none;
-            overflow-y: auto;
-        }
-        .post-it.completed {
-            opacity: 0.6;
-            transform: scale(0.95);
-        }
-        .post-it.completed .post-it-content {
-            text-decoration: line-through;
-            color: #6b7280;
-        }
     </style>
 </head>
 <body class="text-gray-800">
 
     <div class="flex">
-        <!-- Sidebar -->
         <aside id="sidebar" class="sidebar h-screen sticky top-0 bg-white shadow-lg p-4 flex flex-col">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-blue-800 sidebar-link-text">Menu</h2>
+                <h2 class="text-2xl font-bold sidebar-link-text" style="color: var(--primary);">Menu</h2>
                 <button id="sidebar-toggle-btn" class="p-2 rounded-md hover:bg-gray-100">
                     <i class="fa-solid fa-bars"></i>
                 </button>
             </div>
             
             <nav class="space-y-2 mb-6">
-                <a href="#" id="nav-workflows" class="nav-link flex items-center p-3 rounded-lg bg-blue-100 text-blue-700 font-semibold">
+                <a href="#" id="nav-workflows" class="nav-link flex items-center p-3 rounded-lg font-semibold" style="background-color: var(--primary-light); color: var(--primary);">
                     <i class="fa-solid fa-check-double w-8 text-center"></i>
                     <span class="sidebar-link-text ml-2">Workflows</span>
                 </a>
-                <a href="#" id="nav-notes" class="nav-link flex items-center p-3 rounded-lg hover:bg-gray-100">
-                    <i class="fa-solid fa-note-sticky w-8 text-center"></i>
-                    <span class="sidebar-link-text ml-2">Quick Notes</span>
-                </a>
             </nav>
 
-            <h3 class="text-xl font-bold text-blue-800 mb-4 sidebar-link-text">Shortcuts</h3>
-            <div id="shortcuts-container" class="space-y-2 mb-6">
-                <!-- Shortcuts will be injected here -->
-            </div>
+            <h3 class="text-xl font-bold mb-4 sidebar-link-text" style="color: var(--primary);">Shortcuts</h3>
+            <div id="shortcuts-container" class="space-y-2 mb-6"></div>
 
-            <!-- MOVED: Action buttons moved here -->
-            <h3 class="text-xl font-bold text-blue-800 mb-4 sidebar-link-text">เครื่องมือ</h3>
+            <h3 class="text-xl font-bold mb-4 sidebar-link-text" style="color: var(--primary);">เครื่องมือ</h3>
             <div id="tools-container" class="space-y-2">
                  <button id="import-template-btn" class="shortcut-btn rounded-lg px-3 py-2 font-semibold flex items-center hover:bg-gray-100">
                     <i class="fas fa-file-import w-8 text-center text-indigo-500"></i>
@@ -198,13 +158,15 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <div class="flex-grow">
-            <!-- Workflow Workspace -->
             <div id="workspace-workflows" class="container mx-auto p-4 md:p-8 max-w-7xl">
-                <header class="mb-6 sticky top-0 z-10 bg-blue-50 py-4 -mx-8 px-8">
+                <header class="mb-6 sticky top-0 z-10 py-4 -mx-8 px-8" style="background-color: var(--bg-header);">
                     <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                         <h1 class="text-3xl md:text-4xl font-bold text-blue-800">Daily Workflow Tracker</h1>
+                         <h1 class="text-3xl md:text-4xl font-bold" style="color: var(--text-primary);">Daily Workflow Tracker</h1>
+                         <div class="relative flex-grow max-w-md">
+                            <input type="search" id="search-input" placeholder="ค้นหา Workflow หรือ Task..." class="w-full bg-white p-2 pl-10 border rounded-lg shadow-sm focus:ring-2 outline-none transition" style="border-color: #e2e8f0; --tw-ring-color: var(--primary);">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                         </div>
                          <div class="flex items-center gap-2">
                             <input type="date" id="date-picker" class="bg-white p-2 border border-gray-300 rounded-lg shadow-sm">
                             <button id="today-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold">วันนี้</button>
@@ -214,8 +176,8 @@
                         <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
                             <h2 class="text-xl font-bold text-gray-800">ภาพรวมความคืบหน้า</h2>
                             <div class="flex items-center gap-4">
-                                <span id="main-progress-details" class="font-semibold text-gray-600 text-lg">0/0 Tasks</span>
-                                <span id="main-progress-text" class="text-2xl font-bold text-green-600">0%</span>
+                                <span id="main-progress-details" class="font-semibold text-lg" style="color: var(--text-secondary);">0/0 Tasks</span>
+                                <span id="main-progress-text" class="text-2xl font-bold" style="color: var(--accent);">0%</span>
                             </div>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-4">
@@ -223,35 +185,17 @@
                         </div>
                     </div>
                 </header>
-                <!-- MOVED: Import/Export buttons removed from here -->
                 <div class="flex justify-end flex-wrap gap-3 my-4">
-                    <button id="edit-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-blue-500 text-white border-blue-600 hover:bg-blue-600"><i class="fas fa-pencil-alt mr-2"></i>แก้ไขรายการ</button>
+                    <button id="edit-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold text-white border-transparent" style="background-color: var(--primary);"><i class="fas fa-pencil-alt mr-2"></i>แก้ไขรายการ</button>
                     <button id="clear-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-red-500 text-white border-red-600 hover:bg-red-600"><i class="fas fa-trash mr-2"></i>ล้างข้อมูลวันนี้</button>
                 </div>
-                <main id="task-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Task cards will be injected here -->
-                </main>
+                <main id="task-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></main>
             </div>
-            
-            <!-- Notes Workspace -->
-            <div id="workspace-notes" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
-                 <header class="mb-6 flex justify-between items-center">
-                    <h1 class="text-3xl md:text-4xl font-bold text-blue-800">Quick Notes</h1>
-                    <button id="add-note-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-yellow-400 text-yellow-900 border-yellow-500 hover:bg-yellow-500">
-                        <i class="fas fa-plus mr-2"></i> Add Note
-                    </button>
-                 </header>
-                 <div id="note-board" class="note-board">
-                    <!-- Notes will be injected here -->
-                 </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- Modals -->
-    <div id="clear-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
-        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform scale-95">
+    <div id="clear-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform">
             <h3 class="text-xl font-bold mb-4">ยืนยันการล้างข้อมูล</h3>
             <p class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลงานทั้งหมดสำหรับวันที่เลือก? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
             <div class="flex justify-end gap-3">
@@ -260,11 +204,23 @@
             </div>
         </div>
     </div>
-    <div id="icon-picker-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 opacity-0 pointer-events-none">
-        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform scale-95">
+
+    <div id="delete-workflow-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform">
+            <h3 class="text-xl font-bold mb-4">ยืนยันการลบ Workflow</h3>
+            <p class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบ Workflow <strong id="workflow-to-delete-name"></strong>? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+            <div class="flex justify-end gap-3">
+                <button id="cancel-delete-workflow-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold">ยกเลิก</button>
+                <button id="confirm-delete-workflow-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-red-500 text-white border-red-600 hover:bg-red-600">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="icon-picker-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold">เลือกไอคอน</h3>
-                <button id="close-icon-picker-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+                <button id="close-icon-picker-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
             </div>
             <div id="icon-picker-grid" class="icon-picker-grid max-h-64 overflow-y-auto"></div>
         </div>
@@ -276,35 +232,17 @@
     <input type="file" id="import-file-input" class="hidden" accept=".json">
 
     <script>
-        // --- SIMULATION SCRIPT ---
         if (typeof window.electronAPI === 'undefined') {
             window.electronAPI = {
                 openFile: async (path) => {
                     if (path.startsWith('http')) { window.open(path, '_blank'); return { success: true }; }
-                    const notification = document.getElementById('notification');
-                    const titleEl = document.getElementById('notification-title');
-                    const messageEl = document.getElementById('notification-message');
-                    if (notification && messageEl && titleEl) {
-                         titleEl.textContent = 'จำลองการทำงาน';
-                         messageEl.textContent = `การเปิดไฟล์ (${path}) ถูกจำลองขึ้น ในโปรแกรมจริงจะสามารถเปิดไฟล์ได้`;
-                         notification.classList.replace('bg-red-600', 'bg-blue-600');
-                         notification.classList.remove('opacity-0', 'pointer-events-none');
-                         setTimeout(() => {
-                             notification.classList.add('opacity-0', 'pointer-events-none');
-                             setTimeout(()=> {
-                                notification.classList.replace('bg-blue-600', 'bg-red-600');
-                                titleEl.textContent = 'เกิดข้อผิดพลาด';
-                             }, 300);
-                         }, 6000);
-                    } else { alert(`จำลองการเปิดไฟล์: ${path}`); }
+                    showNotification('จำลองการทำงาน', `การเปิดไฟล์ (${path}) ถูกจำลองขึ้น ในโปรแกรมจริงจะสามารถเปิดไฟล์ได้`, 'info');
                     return { success: true };
                 }
             };
         }
-        // --- END SIMULATION SCRIPT ---
 
         document.addEventListener('DOMContentLoaded', function() {
-            // --- UI Elements ---
             const taskGrid = document.getElementById('task-grid');
             const datePicker = document.getElementById('date-picker');
             const todayBtn = document.getElementById('today-btn');
@@ -324,55 +262,39 @@
             const sidebar = document.getElementById('sidebar');
             const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
             const navWorkflows = document.getElementById('nav-workflows');
-            const navNotes = document.getElementById('nav-notes');
             const workspaceWorkflows = document.getElementById('workspace-workflows');
-            const workspaceNotes = document.getElementById('workspace-notes');
-            const addNoteBtn = document.getElementById('add-note-btn');
-            const noteBoard = document.getElementById('note-board');
+            const searchInput = document.getElementById('search-input');
+            const deleteWorkflowModal = document.getElementById('delete-workflow-modal');
+            const cancelDeleteWorkflowBtn = document.getElementById('cancel-delete-workflow-btn');
+            const confirmDeleteWorkflowBtn = document.getElementById('confirm-delete-workflow-btn');
+            const workflowToDeleteNameSpan = document.getElementById('workflow-to-delete-name');
 
-            // --- State Management ---
             let currentDate = new Date();
             let isEditMode = false;
             let tasksMasterData = [];
             let shortcutsMasterData = [];
-            let notesMasterData = [];
             let currentShortcutIndex = null;
             let sortableInstances = []; 
+            let workflowToDeleteId = null;
 
-            // --- Default & Available Data ---
             const availableIcons = ['fa-link', 'fa-shield-halved', 'fa-chart-line', 'fa-file-alt', 'fa-cogs', 'fa-database', 'fa-server', 'fa-cloud', 'fa-envelope', 'fa-folder-open', 'fa-globe', 'fa-print', 'fa-calculator', 'fa-camera', 'fa-video', 'fa-music'];
             const defaultTasksData = [
-                 { id: 1, title: 'Open Styline', tasks: [{ name: 'เปิด Styline Daily report ใน Styline', link: '#' }, { name: 'เปิดแผนพิมพ์', link: '#' }, { name: 'เปลี่ยนชื่อไฟล์อัพเดทวันที่', link: '' }, { name: 'Refresh ไฟล์แผนพิมพ์', link: '' }] },
-                 { id: 2, title: 'Open Power BI', tasks: [] }, { id: 3, title: 'Open BIS', tasks: [] },
+                 { id: 1, title: 'Open Styline', tasks: [{ name: 'เปิด Styline Daily report ใน Styline', link: '#' }, { name: 'เปิดแผนพิมพ์', link: '#' }] },
                  { id: 4, title: 'Update ผลผลิตใน Power BI', tasks: [{ name: 'Update ข้อมูลใน excel ผลผลิต', link: '#' }, { name: 'Refresh Power BI (1. GHCQ Production)', link: '#' }] },
-                 { id: 5, title: 'ส่งเมลผลผลิต', tasks: [ { name: 'อัพเดทผลผลิตวันที่', link: '' } ]},
-                 { id: 6, title: 'Update Order Status', tasks: [{ name: 'เปิดไฟล์ Order Status จาก Styline', link: '#' }, { name: 'อัพเดท Order Status ด้วยไฟล์ excel แผนพิมพ์', link: '#' }, { name: 'อัพเดท Data order status.xlsx', link: '#' }, { name: 'Refresh Power BI (2. Order Status)', link: '#' }, { name: 'แคปภาพปรับ CU', link: '' }, { name: 'เปิดไฟล์ Order Report เอามาใส่ในแผนพิมพ์', link: '#' }] },
-                 { id: 7, title: 'Update JOB Status', tasks: [{ name: 'เปิดไฟล์ Check Job เอามาใส่ในแผนพิมพ์ (Mon/Wed/Fri)', link: '#' }, { name: 'อัพเดท JobComplete และ ไม่ตรง order', link: '' }] },
-                 { id: 8, title: 'Plan', tasks: [{ name: 'เปลี่ยนชื่อไฟล์อัพเดทวันที่', link: '' }, { name: 'Refresh Stock Room', link: '' }, { name: 'Refresh Workbook Link', link: '' }, { name: 'ส่งเมลรายงานวันที่', link: '' }] },
-                 { id: 9, title: 'Auto Job', tasks: [{ name: 'เปิด Job ใหม่', link: '#' }, { name: 'อัพเดทไฟล์ AutoJob.xlsx', link: '#' }, { name: 'Refresh Power BI (3. AutoJob)', link: '#' }, { name: 'เอา Job ใส่แผนพิมพ์', link: '' }] },
-                 { id: 10, title: 'เตรียมไฟล์ก่อน Upload', tasks: [{ name: 'เช็ค Job p', link: '' }, { name: 'เตรียม Planning + ตัวรีด', link: '' }, { name: 'Update Stock บ้าน', link: '' }, { name: 'Update CF', link: '' }, { name: 'Update แบบเหมือน', link: '' }, { name: 'ตรวจสอบไฟล์', link: '' }] },
-                 { id: 11, title: 'Uplaod แผน', tasks: [{ name: 'ส่งไฟล์เข้า Connect Flexo โรง 4', link: '#' }, { name: 'Upload แบบลง Job Planning', link: '#' }, { name: 'Calculation + utility check', link: '#' }, { name: 'อัพเดท google sheet ให้ทีมคิด', link: '#' }, { name: 'เช็คลง Drive กลาง', link: '#' }] },
-                 { id: 12, title: 'ทบทวน', tasks: [ { name: 'เช็คยอด CI', link: '' }, { name: 'ปล่อยแผน', link: '' } ]},
-                 { id: 15, title: 'Plan_Sales', tasks: [{ name: 'เปิดแผนพิมพ์', link: '#' }, { name: 'Refresh Workbook Link', link: '' }, { name: 'Refresh Stock Room', link: '' }, { name: 'อัพเดทตาราง', link: '' }, { name: 'เช็คแผน', link: '' }, { name: 'เช็คสินค้าใหม่', link: '' }, { name: 'ส่ง Mail ขาย', link: '' }] },
-                 { id: 16, title: 'Plan_Machine', tasks: [{ name: 'Refresh แผนผลิต', link: '' }, { name: 'Update Workbook Link', link: '' }, { name: 'เปิดแผนพิมพ์', link: '#' }, { name: 'อัพเดทชีท', link: '' }, { name: 'ส่ง Mail แผนผลิต', link: '' }] }
+                 { id: 6, title: 'Update Order Status', tasks: [{ name: 'เปิดไฟล์ Order Status จาก Styline', link: '#' }, { name: 'อัพเดท Order Status ด้วยไฟล์ excel แผนพิมพ์', link: '#' }] },
             ];
             const defaultShortcutsData = [
                 { id: 1, name: 'Connect VPN', link: 'C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe', icon: 'fa-shield-halved' },
-                { id: 2, name: 'Power BI', link: '#', icon: 'fa-chart-line' }, { id: 3, title: 'Styline', link: '#', icon: 'fa-file-alt' }, { id: 4, name: 'GRCQ', link: '#', icon: 'fa-cogs' }
+                { id: 2, name: 'Power BI', link: '#', icon: 'fa-chart-line' },
             ];
-            const noteColors = ['bg-yellow-200', 'bg-green-200', 'bg-blue-200', 'bg-pink-200', 'bg-purple-200'];
 
-            // --- Data Loading ---
             function loadMasterData() {
                 const savedTasks = localStorage.getItem('tasksMasterData');
                 tasksMasterData = savedTasks ? JSON.parse(savedTasks) : defaultTasksData;
                 const savedShortcuts = localStorage.getItem('shortcutsMasterData');
                 shortcutsMasterData = savedShortcuts ? JSON.parse(savedShortcuts) : defaultShortcutsData;
-                const savedNotes = localStorage.getItem('notesMasterData');
-                notesMasterData = savedNotes ? JSON.parse(savedNotes) : [];
             }
             
-            // --- Helper Functions ---
             function formatDate(date) {
                 const d = new Date(date);
                 let month = '' + (d.getMonth() + 1), day = '' + d.getDate(), year = d.getFullYear();
@@ -386,21 +308,14 @@
                 const messageEl = document.getElementById('notification-message');
                 titleEl.textContent = title;
                 messageEl.textContent = message;
-
                 notification.classList.remove('bg-red-600', 'bg-blue-600', 'bg-green-600');
-                if (type === 'info') {
-                    notification.classList.add('bg-blue-600');
-                } else if (type === 'success') {
-                    notification.classList.add('bg-green-600');
-                } else {
-                    notification.classList.add('bg-red-600');
-                }
-
+                if (type === 'info') { notification.classList.add('bg-blue-600'); } 
+                else if (type === 'success') { notification.classList.add('bg-green-600'); } 
+                else { notification.classList.add('bg-red-600'); }
                 notification.classList.remove('opacity-0', 'pointer-events-none');
                 setTimeout(() => { notification.classList.add('opacity-0', 'pointer-events-none'); }, 6000);
             }
 
-            // --- Render Functions ---
             function renderShortcuts() {
                 shortcutsContainer.innerHTML = '';
                 shortcutsMasterData.forEach((shortcut, index) => {
@@ -415,9 +330,8 @@
                         button.dataset.link = shortcut.link;
                         button.innerHTML = `<i class="fas ${shortcut.icon || 'fa-link'} mr-3 w-5 text-center"></i><span class="sidebar-link-text">${shortcut.name}</span>`;
                         button.addEventListener('click', async () => {
-                            const link = button.dataset.link;
-                            if (link && link !== '#') {
-                                const result = await window.electronAPI.openFile(link);
+                            if (button.dataset.link && button.dataset.link !== '#') {
+                                const result = await window.electronAPI.openFile(button.dataset.link);
                                 if (!result.success) { showNotification('เกิดข้อผิดพลาด', `ไม่สามารถเปิด Shortcut ได้: ${result.error}`); }
                             }
                         });
@@ -427,7 +341,7 @@
                 if(isEditMode) {
                     const addButton = document.createElement('button');
                     addButton.id = 'add-shortcut-btn';
-                    addButton.className = 'shortcut-btn rounded-lg px-3 py-2 text-blue-500 border-blue-200 hover:bg-blue-50 flex items-center';
+                    addButton.className = 'shortcut-btn rounded-lg px-3 py-2 text-indigo-500 border-indigo-200 hover:bg-indigo-50 flex items-center';
                     addButton.innerHTML = '<i class="fas fa-plus mr-2"></i><span class="sidebar-link-text">Add Shortcut</span>';
                     shortcutsContainer.appendChild(addButton);
                 }
@@ -436,30 +350,64 @@
             function renderTasks(date) {
                 currentDate = date;
                 taskGrid.innerHTML = '';
-                tasksMasterData.forEach(workflow => {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const filteredWorkflows = tasksMasterData.filter(workflow => {
+                    if (!searchTerm) return true;
+                    const titleMatch = workflow.title.toLowerCase().includes(searchTerm);
+                    const taskMatch = workflow.tasks.some(task => task.name.toLowerCase().includes(searchTerm));
+                    return titleMatch || taskMatch;
+                });
+
+                filteredWorkflows.forEach(workflow => {
                     const card = document.createElement('div');
-                    card.className = 'task-card bg-white rounded-xl shadow-sm p-5 flex flex-col';
+                    card.className = 'task-card';
                     card.dataset.workflowId = workflow.id;
+                    
                     let tasksHtml = workflow.tasks.map((task, index) => {
                         const taskId = `task-${workflow.id}-${index}`;
                         if (isEditMode) {
-                            return `<div class="task-item-edit flex items-center gap-2 mb-2 p-2 border rounded-md bg-gray-50" data-task-index="${index}"><div class="flex-grow"><input type="text" value="${task.name}" data-type="name" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded mb-1" placeholder="Task Name"><input type="text" value="${task.link || ''}" data-type="link" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded text-sm text-gray-500" placeholder="File Path or URL"></div><button class="remove-task-btn edit-action-btn" data-workflow-id="${workflow.id}" data-task-index="${index}"><i class="fas fa-trash-alt"></i></button></div>`;
+                            return `<div class="task-item-edit flex items-center gap-2 mb-2 p-2 border rounded-md bg-gray-50" data-task-index="${index}">
+                                        <div class="flex-grow">
+                                            <input type="text" value="${task.name}" data-type="name" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded mb-1 text-sm" placeholder="Task Name">
+                                            <input type="text" value="${task.link || ''}" data-type="link" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded text-xs text-gray-500" placeholder="File Path or URL">
+                                        </div>
+                                        <button class="remove-task-btn edit-action-btn" data-workflow-id="${workflow.id}" data-task-index="${index}" title="ลบ Task นี้"><i class="fas fa-trash-alt"></i></button>
+                                    </div>`;
                         } else {
                             const linkElement = (task.link && task.link !== '#') ? `<button class="task-link-btn hover:underline text-left" data-link="${task.link}">${task.name} <i class="fas ${task.link.startsWith('http') ? 'fa-external-link-alt' : 'fa-folder-open'} fa-xs opacity-60"></i></button>` : task.name;
-                            return `<div class="task-item flex items-center mb-2 last:mb-0"><input type="checkbox" id="${taskId}" class="h-5 w-5 rounded border-gray-300 text-green-500 focus:ring-green-500 cursor-pointer flex-shrink-0"><label for="${taskId}" class="ml-3 text-gray-700 cursor-pointer">${linkElement}</label></div>`;
+                            return `<div class="task-item flex items-center mb-2 last:mb-0"><input type="checkbox" id="${taskId}" class="h-5 w-5 rounded border-gray-300 focus:ring-0 cursor-pointer flex-shrink-0" style="color: var(--primary);"><label for="${taskId}" class="ml-3 text-gray-700 cursor-pointer">${linkElement}</label></div>`;
                         }
                     }).join('');
-                    if (isEditMode) { tasksHtml += `<button class="add-task-btn mt-2 text-sm text-blue-500 hover:underline w-full text-left" data-workflow-id="${workflow.id}"><i class="fas fa-plus mr-1"></i> เพิ่ม Task</button>`; }
-                    const titleElement = isEditMode ? `<input type="text" value="${workflow.title}" data-workflow-id="${workflow.id}" class="workflow-title-input text-lg font-bold text-gray-900 bg-transparent border-b-2 border-transparent focus:border-blue-500 outline-none w-full">` : `<h3 class="text-lg font-bold text-gray-900">${workflow.id}. ${workflow.title}</h3>`;
-                    card.innerHTML = `<div class="flex justify-between items-start mb-3 gap-2">${isEditMode ? `<span class="drag-handle pt-1"><i class="fas fa-grip-vertical"></i></span>` : ''}<div class="flex-grow">${titleElement}</div>${!isEditMode ? `<span id="progress-text-${workflow.id}" class="font-semibold text-gray-500">0%</span>` : ''}</div>${!isEditMode && workflow.tasks.length > 0 ? `<div class="w-full bg-gray-200 rounded-full h-2.5 mb-4"><div id="progress-bar-${workflow.id}" class="progress-bar-fg h-2.5 rounded-full"></div></div>` : ''}<div class="task-list flex-grow" data-workflow-id="${workflow.id}">${tasksHtml}</div>`;
+                    
+                    if (isEditMode) {
+                        tasksHtml += `<button class="add-task-btn mt-2 text-sm hover:underline w-full text-left p-2 rounded-md hover:bg-indigo-50" style="color: var(--primary);"><i class="fas fa-plus mr-1"></i> เพิ่ม Task</button>`;
+                    }
+                    
+                    const titleElement = isEditMode ? `<input type="text" value="${workflow.title}" data-workflow-id="${workflow.id}" class="workflow-title-input text-lg font-bold text-gray-900 bg-transparent border-b-2 border-transparent focus:border-indigo-500 outline-none w-full">` : `<h3 class="text-lg font-bold text-gray-900">${workflow.id}. ${workflow.title}</h3>`;
+                    
+                    const cardHeader = `
+                        <div class="flex justify-between items-start mb-3 gap-2">
+                            ${isEditMode ? '<span class="drag-handle pt-1 pr-2"><i class="fas fa-grip-vertical"></i></span>' : ''}
+                            <div class="flex-grow">${titleElement}</div>
+                            ${!isEditMode ? `<span id="progress-text-${workflow.id}" class="font-semibold text-gray-500 pt-1">0%</span>` : ''}
+                        </div>`;
+                        
+                    const macroButton = (!isEditMode && workflow.tasks.some(t => t.link && t.link !== '#')) 
+                        ? `<button class="run-macro-btn card-action-button" data-workflow-id="${workflow.id}" title="Run all tasks"><i class="fas fa-play"></i></button>` 
+                        : '';
+
+                    const deleteWorkflowButton = isEditMode
+                        ? `<button class="delete-workflow-btn card-action-button" data-workflow-id="${workflow.id}" title="Delete workflow"><i class="fas fa-trash-alt"></i></button>`
+                        : '';
+
+                    card.innerHTML = `${macroButton}${deleteWorkflowButton}<div class="p-5">${cardHeader}${!isEditMode && workflow.tasks.length > 0 ? `<div class="w-full bg-gray-200 rounded-full h-2.5 mb-4"><div id="progress-bar-${workflow.id}" class="progress-bar-fg h-2.5 rounded-full"></div></div>` : ''}<div class="task-list flex-grow" data-workflow-id="${workflow.id}">${tasksHtml}</div></div>`;
                     taskGrid.appendChild(card);
                 });
 
-                // ADDED: Add workflow button in edit mode
                 if (isEditMode) {
                     const addWorkflowCard = document.createElement('button');
                     addWorkflowCard.id = 'add-workflow-btn';
-                    addWorkflowCard.className = 'task-card bg-white/50 hover:bg-white border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-xl shadow-sm p-5 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors duration-200 min-h-[150px]';
+                    addWorkflowCard.className = 'task-card bg-white/50 hover:bg-white border-2 border-dashed border-gray-300 hover:border-indigo-400 rounded-xl shadow-sm p-5 flex flex-col items-center justify-center text-gray-400 hover:text-indigo-500 transition-colors duration-200 min-h-[150px]';
                     addWorkflowCard.innerHTML = `<i class="fas fa-plus fa-2x mb-2"></i><span class="font-semibold">Add New Workflow</span>`;
                     taskGrid.appendChild(addWorkflowCard);
                 }
@@ -470,13 +418,12 @@
                 } else { initializeSortable(); }
             }
             
-            function renderAll(date) { renderShortcuts(); renderTasks(date); renderNotes(); }
+            function renderAll(date) { renderShortcuts(); renderTasks(date); }
 
-            // --- Progress Logic ---
             function saveProgress() {
                 const dateKey = `dailyTaskProgress-${formatDate(currentDate)}`;
                 const progressState = {};
-                taskGrid.querySelectorAll('.task-item input[type="checkbox"]').forEach(cb => { progressState[cb.id] = cb.checked; });
+                document.querySelectorAll('#task-grid .task-item input[type="checkbox"]').forEach(cb => { progressState[cb.id] = cb.checked; });
                 localStorage.setItem(dateKey, JSON.stringify(progressState));
             }
 
@@ -485,73 +432,64 @@
                 const savedProgress = localStorage.getItem(dateKey);
                 if (savedProgress) {
                     const progressState = JSON.parse(savedProgress);
-                    taskGrid.querySelectorAll('.task-item input[type="checkbox"]').forEach(cb => { if (progressState[cb.id]) { cb.checked = true; } });
+                    Object.keys(progressState).forEach(id => {
+                        const cb = document.getElementById(id);
+                        if (cb) cb.checked = progressState[id];
+                    });
                 }
             }
 
             function updateProgress() {
-                let totalTasks = 0, completedTasks = 0;
-                tasksMasterData.forEach(workflow => {
-                    if (workflow.tasks.length === 0) return;
-                    const card = taskGrid.querySelector(`.task-card[data-workflow-id="${workflow.id}"]`);
-                    if (!card) return;
+                let totalTasksOverall = 0;
+                let completedTasksOverall = 0;
+                const renderedWorkflows = Array.from(taskGrid.querySelectorAll('.task-card[data-workflow-id]'));
+                
+                renderedWorkflows.forEach(card => {
                     const checkboxes = card.querySelectorAll('input[type="checkbox"]');
-                    const completed = Array.from(checkboxes).filter(cb => cb.checked).length;
-                    const total = checkboxes.length;
-                    totalTasks += total; completedTasks += completed;
-                    const percentage = total > 0 ? (completed / total) * 100 : 0;
-                    const bar = card.querySelector(`#progress-bar-${workflow.id}`);
-                    const text = card.querySelector(`#progress-text-${workflow.id}`);
-                    if (bar) bar.style.width = `${percentage}%`;
-                    if (text) text.textContent = `${Math.round(percentage)}%`;
+                    if (checkboxes.length > 0) {
+                        const completedInCard = Array.from(checkboxes).filter(cb => cb.checked).length;
+                        const totalInCard = checkboxes.length;
+                        totalTasksOverall += totalInCard;
+                        completedTasksOverall += completedInCard;
+                        const percentage = (completedInCard / totalInCard) * 100;
+                        const bar = card.querySelector(`#progress-bar-${card.dataset.workflowId}`);
+                        const text = card.querySelector(`#progress-text-${card.dataset.workflowId}`);
+                        if(bar) bar.style.width = `${percentage}%`;
+                        if(text) text.textContent = `${Math.round(percentage)}%`;
+                    }
                 });
-                document.getElementById('main-progress-details').textContent = `${completedTasks}/${totalTasks} Tasks`;
-                const overallPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+                document.getElementById('main-progress-details').textContent = `${completedTasksOverall}/${totalTasksOverall} Tasks`;
+                const overallPercentage = totalTasksOverall > 0 ? (completedTasksOverall / totalTasksOverall) * 100 : 0;
                 const mainBar = document.getElementById('main-progress-bar');
                 mainBar.style.width = `${overallPercentage}%`;
                 
-                const red = [239, 68, 68], orange = [249, 115, 22], yellow = [234, 179, 8], green = [34, 197, 94];
+                const red = [239, 68, 68], yellow = [234, 179, 8], green = [34, 197, 94];
                 let color;
-                if (overallPercentage < 33.3) {
-                    const ratio = overallPercentage / 33.3;
-                    color = red.map((c, i) => Math.round(c + ratio * (orange[i] - c)));
-                } else if (overallPercentage < 66.6) {
-                    const ratio = (overallPercentage - 33.3) / 33.3;
-                    color = orange.map((c, i) => Math.round(c + ratio * (yellow[i] - c)));
+                if (overallPercentage < 50) {
+                    color = red.map((c, i) => Math.round(c + (overallPercentage / 50) * (yellow[i] - c)));
                 } else {
-                    const ratio = (overallPercentage - 66.6) / 33.4;
-                    color = yellow.map((c, i) => Math.round(c + ratio * (green[i] - c)));
+                    color = yellow.map((c, i) => Math.round(c + ((overallPercentage - 50) / 50) * (green[i] - c)));
                 }
-
                 mainBar.style.backgroundColor = `rgb(${color.join(',')})`;
                 document.getElementById('main-progress-text').textContent = `${Math.round(overallPercentage)}%`;
             }
             
-            // --- Drag & Drop Logic ---
             function initializeSortable() {
                 destroySortable();
                 const gridSortable = new Sortable(taskGrid, { 
-                    animation: 150, 
-                    handle: '.drag-handle', 
-                    ghostClass: 'sortable-ghost', 
-                    chosenClass: 'sortable-chosen',
-                    filter: '#add-workflow-btn', // Prevent "Add" button from being draggable
+                    animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen',
+                    filter: '#add-workflow-btn',
                     onEnd: e => {
-                        if (e.to !== e.from || e.oldIndex !== e.newIndex) {
-                            const [moved] = tasksMasterData.splice(e.oldIndex, 1);
-                            tasksMasterData.splice(e.newIndex, 0, moved);
-                        }
+                        const [moved] = tasksMasterData.splice(e.oldIndex, 1);
+                        tasksMasterData.splice(e.newIndex, 0, moved);
                     } 
                 });
                 sortableInstances.push(gridSortable);
-
                 taskGrid.querySelectorAll('.task-list').forEach(list => {
                     const workflowId = parseInt(list.dataset.workflowId);
-                    const listSortable = new Sortable(list, { 
-                        group: `tasks-${workflowId}`, 
-                        animation: 150, 
-                        ghostClass: 'sortable-ghost', 
-                        chosenClass: 'sortable-chosen', 
+                    new Sortable(list, { 
+                        group: `tasks-${workflowId}`, animation: 150, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', 
                         onEnd: e => { 
                             const wf = tasksMasterData.find(w => w.id === workflowId); 
                             if (wf) { 
@@ -560,17 +498,15 @@
                             } 
                         } 
                     });
-                    sortableInstances.push(listSortable);
                 });
             }
             function destroySortable() { sortableInstances.forEach(i => i.destroy()); sortableInstances = []; }
 
-            // --- Modal & Edit Handlers ---
             function handleEditToggle() {
                 isEditMode = !isEditMode;
                 if (isEditMode) {
                     editBtn.innerHTML = `<i class="fas fa-save mr-2"></i>บันทึก`;
-                    editBtn.classList.replace('bg-blue-500', 'bg-green-500'); editBtn.classList.replace('border-blue-600', 'border-green-600'); editBtn.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+                    editBtn.style.backgroundColor = 'var(--accent)';
                 } else {
                     taskGrid.querySelectorAll('.workflow-title-input').forEach(i => { const wf = tasksMasterData.find(w => w.id === parseInt(i.dataset.workflowId)); if (wf) wf.title = i.value; });
                     taskGrid.querySelectorAll('.task-item-edit input').forEach(i => { const wf = tasksMasterData.find(w => w.id === parseInt(i.dataset.workflowId)); if (wf && wf.tasks[parseInt(i.dataset.taskIndex)]) { wf.tasks[parseInt(i.dataset.taskIndex)][i.dataset.type] = i.value; } });
@@ -578,7 +514,7 @@
                     shortcutsContainer.querySelectorAll('input').forEach(i => { if (shortcutsMasterData[parseInt(i.dataset.shortcutIndex)]) { shortcutsMasterData[parseInt(i.dataset.shortcutIndex)][i.dataset.type] = i.value; } });
                     localStorage.setItem('shortcutsMasterData', JSON.stringify(shortcutsMasterData));
                     editBtn.innerHTML = `<i class="fas fa-pencil-alt mr-2"></i>แก้ไขรายการ`;
-                    editBtn.classList.replace('bg-green-500', 'bg-blue-500'); editBtn.classList.replace('border-green-600', 'border-blue-600'); editBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-600');
+                    editBtn.style.backgroundColor = 'var(--primary)';
                     destroySortable();
                 }
                 renderAll(currentDate);
@@ -587,17 +523,33 @@
                 currentShortcutIndex = index;
                 iconPickerGrid.innerHTML = '';
                 availableIcons.forEach(iconClass => { const item = document.createElement('div'); item.className = 'icon-picker-item'; item.dataset.iconClass = iconClass; item.innerHTML = `<i class="fas ${iconClass} fa-lg"></i>`; iconPickerGrid.appendChild(item); });
-                iconPickerModal.classList.remove('opacity-0', 'pointer-events-none'); iconPickerModal.querySelector('.modal-box').classList.remove('scale-95');
+                iconPickerModal.classList.add('active');
             }
-            function closeIconPicker() { iconPickerModal.classList.add('opacity-0', 'pointer-events-none'); iconPickerModal.querySelector('.modal-box').classList.add('scale-95'); }
-            function showClearModal() { clearModal.classList.remove('opacity-0', 'pointer-events-none'); clearModal.querySelector('.modal-box').classList.remove('scale-95'); }
-            function hideClearModal() { clearModal.classList.add('opacity-0', 'pointer-events-none'); clearModal.querySelector('.modal-box').classList.add('scale-95'); }
+            function closeIconPicker() { iconPickerModal.classList.remove('active'); }
+            function showClearModal() { clearModal.classList.add('active'); }
+            function hideClearModal() { clearModal.classList.remove('active'); }
             function handleClearTasks() { localStorage.removeItem(`dailyTaskProgress-${formatDate(currentDate)}`); hideClearModal(); renderTasks(currentDate); }
 
-            // --- Save to HTML Function ---
+            function showDeleteWorkflowModal(id, name) {
+                workflowToDeleteId = id;
+                workflowToDeleteNameSpan.textContent = `'${name}'`;
+                deleteWorkflowModal.classList.add('active');
+            }
+            function hideDeleteWorkflowModal() {
+                deleteWorkflowModal.classList.remove('active');
+                workflowToDeleteId = null;
+            }
+            function handleConfirmDeleteWorkflow() {
+                if (workflowToDeleteId !== null) {
+                    tasksMasterData = tasksMasterData.filter(w => w.id !== workflowToDeleteId);
+                    hideDeleteWorkflowModal();
+                    renderTasks(currentDate);
+                }
+            }
+
             function handleSaveToHtml() {
                 if (isEditMode) {
-                    showNotification('ไม่สามารถบันทึกได้', 'กรุณาออกจากโหมดแก้ไขก่อนทำการบันทึกเป็น HTML', 'info');
+                    showNotification('ไม่สามารถบันทึกได้', 'กรุณาออกจากโหมดแก้ไขก่อนทำการบันทึก', 'info');
                     return;
                 }
                 const dateStr = formatDate(currentDate);
@@ -606,15 +558,12 @@
                 const originalCheckboxes = taskGrid.querySelectorAll('input[type="checkbox"]');
                 const clonedCheckboxes = gridClone.querySelectorAll('input[type="checkbox"]');
                 originalCheckboxes.forEach((cb, index) => {
-                    if (cb.checked) {
-                        clonedCheckboxes[index].setAttribute('checked', 'checked');
-                    }
+                    if (cb.checked) { clonedCheckboxes[index].setAttribute('checked', 'checked'); }
                 });
                 const styles = document.querySelector('style').innerHTML;
                 const headerContent = document.querySelector('#workspace-workflows > header').outerHTML;
                 const gridContent = gridClone.outerHTML;
-                const htmlContent = `
-                    <!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Daily Workflow - ${dateStr}</title><script src="https://cdn.tailwindcss.com"><\/script><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"><style>${styles} body { padding: 2rem; } .task-link-btn, input[type="checkbox"] { pointer-events: none; } .task-link-btn { color: #1f2937; } header { position: static !important; }<\/style></head><body class="text-gray-800 bg-blue-50"><div class="container mx-auto max-w-7xl">${headerContent}${gridContent}</div></body></html>`;
+                const htmlContent = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Daily Workflow - ${dateStr}</title><script src="https://cdn.tailwindcss.com"><\/script><style>${styles} body{padding:2rem;} .task-link-btn, input[type="checkbox"]{pointer-events:none;} .task-link-btn{color:#1f2937;} header{position:static!important;}</style></head><body class="bg-blue-50"><div class="container mx-auto max-w-7xl">${headerContent}${gridContent}</div></body></html>`;
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -625,135 +574,55 @@
                 URL.revokeObjectURL(a.href);
             }
 
-            // --- Import/Export Template Functions ---
             function handleExportTemplate() {
-                try {
-                    const dataStr = JSON.stringify(tasksMasterData, null, 2);
-                    const blob = new Blob([dataStr], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'workflow-template.json';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    showNotification('สำเร็จ', 'ส่งออกเทมเพลตเรียบร้อยแล้ว', 'success');
-                } catch (error) {
-                    showNotification('เกิดข้อผิดพลาด', 'ไม่สามารถส่งออกเทมเพลตได้');
-                }
+                const dataStr = JSON.stringify(tasksMasterData, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'workflow-template.json';
+                a.click();
+                URL.revokeObjectURL(a.href);
             }
 
             function handleImportTemplate(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
                         const importedData = JSON.parse(e.target.result);
-                        if (Array.isArray(importedData) && importedData.every(item => 'id' in item && 'title' in item && 'tasks' in item)) {
+                        if (Array.isArray(importedData)) {
                             tasksMasterData = importedData;
                             localStorage.setItem('tasksMasterData', JSON.stringify(tasksMasterData));
                             renderAll(currentDate);
                             showNotification('สำเร็จ', 'นำเข้าเทมเพลตเรียบร้อยแล้ว', 'success');
-                        } else {
-                            throw new Error('Invalid template file format.');
-                        }
+                        } else { throw new Error('Invalid format.'); }
                     } catch (error) {
-                        showNotification('เกิดข้อผิดพลาด', 'ไฟล์เทมเพลตไม่ถูกต้องหรือเสียหาย');
+                        showNotification('เกิดข้อผิดพลาด', 'ไฟล์เทมเพลตไม่ถูกต้อง', 'error');
                     } finally {
                         importFileInput.value = '';
                     }
                 };
                 reader.readAsText(file);
             }
-
-            // --- Note Taking Functions ---
-            function renderNotes() {
-                noteBoard.innerHTML = '';
-                notesMasterData.forEach(note => {
-                    const noteEl = document.createElement('div');
-                    noteEl.className = `post-it ${note.color}`;
-                    noteEl.dataset.noteId = note.id;
-                    noteEl.style.left = `${note.x}px`;
-                    noteEl.style.top = `${note.y}px`;
-                    if (note.isCompleted) noteEl.classList.add('completed');
-                    noteEl.innerHTML = `
-                        <div class="post-it-header">
-                            <button class="note-color-btn"><i class="fas fa-palette"></i></button>
-                            <button class="note-complete-btn"><i class="fas fa-check"></i></button>
-                            <button class="note-delete-btn"><i class="fas fa-trash"></i></button>
-                        </div>
-                        <div class="post-it-content" contenteditable="true">${note.content}</div>
-                    `;
-                    noteBoard.appendChild(noteEl);
-                });
+            
+            async function handleRunMacro(workflowId) {
+                const workflow = tasksMasterData.find(w => w.id === parseInt(workflowId));
+                if (!workflow) return;
+                const tasksToRun = workflow.tasks.filter(t => t.link && t.link !== '#');
+                if (tasksToRun.length === 0) {
+                    showNotification('Macro', 'ไม่มีลิงก์ให้เปิดใน Workflow นี้', 'info');
+                    return;
+                }
+                showNotification('Macro', `กำลังเปิด ${tasksToRun.length} tasks...`, 'info');
+                for (const task of tasksToRun) {
+                    await window.electronAPI.openFile(task.link);
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
             }
-            function saveNotes() { localStorage.setItem('notesMasterData', JSON.stringify(notesMasterData)); }
 
-            // --- Event Listeners ---
             sidebarToggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-            navWorkflows.addEventListener('click', (e) => {
-                e.preventDefault();
-                workspaceWorkflows.classList.remove('hidden'); workspaceNotes.classList.add('hidden');
-                navWorkflows.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
-                navNotes.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
-            });
-            navNotes.addEventListener('click', (e) => {
-                e.preventDefault();
-                workspaceNotes.classList.remove('hidden'); workspaceWorkflows.classList.add('hidden');
-                navNotes.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
-                navWorkflows.classList.remove('bg-blue-100', 'text-blue-700', 'font-semibold');
-            });
-            addNoteBtn.addEventListener('click', () => {
-                const newNote = { id: Date.now(), content: 'Double-click to edit...', x: 50, y: 50, isCompleted: false, color: noteColors[Math.floor(Math.random() * noteColors.length)] };
-                notesMasterData.push(newNote);
-                renderNotes(); saveNotes();
-            });
-            noteBoard.addEventListener('input', e => {
-                if (e.target.classList.contains('post-it-content')) {
-                    const noteId = parseInt(e.target.closest('.post-it').dataset.noteId);
-                    const note = notesMasterData.find(n => n.id === noteId);
-                    if (note) { note.content = e.target.innerHTML; saveNotes(); }
-                }
-            });
-            noteBoard.addEventListener('click', e => {
-                const noteEl = e.target.closest('.post-it');
-                if (!noteEl) return;
-                const noteId = parseInt(noteEl.dataset.noteId);
-                const note = notesMasterData.find(n => n.id === noteId);
-                if (e.target.closest('.note-delete-btn')) {
-                    notesMasterData = notesMasterData.filter(n => n.id !== noteId);
-                    renderNotes(); saveNotes();
-                } else if (e.target.closest('.note-complete-btn')) {
-                    if (note) { note.isCompleted = !note.isCompleted; renderNotes(); saveNotes(); }
-                } else if (e.target.closest('.note-color-btn')) {
-                    if (note) { note.color = noteColors[Math.floor(Math.random() * noteColors.length)]; renderNotes(); saveNotes(); }
-                }
-            });
-            noteBoard.addEventListener('mousedown', e => {
-                const noteEl = e.target.closest('.post-it');
-                if (!noteEl || !e.target.classList.contains('post-it-header')) return;
-                const noteId = parseInt(noteEl.dataset.noteId);
-                const note = notesMasterData.find(n => n.id === noteId);
-                if (!note) return;
-                const startX = e.clientX, startY = e.clientY;
-                const startLeft = noteEl.offsetLeft, startTop = noteEl.offsetTop;
-                const moveHandler = (moveEvent) => {
-                    const dx = moveEvent.clientX - startX, dy = moveEvent.clientY - startY;
-                    noteEl.style.left = `${startLeft + dx}px`;
-                    noteEl.style.top = `${startTop + dy}px`;
-                };
-                const upHandler = () => {
-                    document.removeEventListener('mousemove', moveHandler);
-                    document.removeEventListener('mouseup', upHandler);
-                    note.x = noteEl.offsetLeft; note.y = noteEl.offsetTop;
-                    saveNotes();
-                };
-                document.addEventListener('mousemove', moveHandler);
-                document.addEventListener('mouseup', upHandler);
-            });
+            
             document.addEventListener('click', async function(e) {
                 if (e.target.closest('#add-shortcut-btn')) { shortcutsMasterData.push({ id: Date.now(), name: 'New Shortcut', link: '', icon: 'fa-link' }); renderShortcuts(); }
                 if (e.target.closest('#add-workflow-btn')) {
@@ -764,10 +633,18 @@
                 if (e.target.closest('.remove-shortcut-btn')) { const i = e.target.closest('.remove-shortcut-btn').dataset.shortcutIndex; shortcutsMasterData.splice(i, 1); renderShortcuts(); }
                 if (e.target.closest('.change-icon-btn')) { openIconPicker(e.target.closest('.change-icon-btn').dataset.shortcutIndex); }
                 if (e.target.closest('.icon-picker-item')) { const icon = e.target.closest('.icon-picker-item').dataset.iconClass; if (currentShortcutIndex !== null) { shortcutsMasterData[currentShortcutIndex].icon = icon; renderShortcuts(); closeIconPicker(); } }
-                if (e.target.classList.contains('add-task-btn')) { const wf = tasksMasterData.find(w => w.id === parseInt(e.target.dataset.workflowId)); if(wf) { wf.tasks.push({ name: 'New Task', link: '' }); renderTasks(currentDate); } }
+                if (e.target.closest('.add-task-btn')) { const wf = tasksMasterData.find(w => w.id === parseInt(e.target.closest('.task-card').dataset.workflowId)); if(wf) { wf.tasks.push({ name: 'New Task', link: '' }); renderTasks(currentDate); } }
                 if (e.target.closest('.remove-task-btn')) { const btn = e.target.closest('.remove-task-btn'); const wf = tasksMasterData.find(w => w.id === parseInt(btn.dataset.workflowId)); if(wf) { wf.tasks.splice(parseInt(btn.dataset.taskIndex), 1); renderTasks(currentDate); } }
                 if (e.target.closest('.task-link-btn')) { const link = e.target.closest('.task-link-btn').dataset.link; if (link && link !== '#') { const r = await window.electronAPI.openFile(link); if (!r.success) { showNotification('เกิดข้อผิดพลาด', `ไม่สามารถเปิด Task link ได้: ${r.error}`); } } }
+                if (e.target.closest('.run-macro-btn')) { handleRunMacro(e.target.closest('.run-macro-btn').dataset.workflowId); }
+                if (e.target.closest('.delete-workflow-btn')) {
+                    const workflowId = parseInt(e.target.closest('.delete-workflow-btn').dataset.workflowId);
+                    const workflow = tasksMasterData.find(w => w.id === workflowId);
+                    if (workflow) showDeleteWorkflowModal(workflow.id, workflow.title);
+                }
             });
+            
+            searchInput.addEventListener('input', () => { renderTasks(currentDate); updateProgress(); });
             datePicker.addEventListener('change', (e) => { const [y, m, d] = e.target.value.split('-').map(Number); renderAll(new Date(y, m - 1, d)); });
             todayBtn.addEventListener('click', () => { const today = new Date(); datePicker.value = formatDate(today); renderAll(today); });
             editBtn.addEventListener('click', handleEditToggle);
@@ -779,6 +656,8 @@
             exportTemplateBtn.addEventListener('click', handleExportTemplate);
             importTemplateBtn.addEventListener('click', () => importFileInput.click());
             importFileInput.addEventListener('change', handleImportTemplate);
+            cancelDeleteWorkflowBtn.addEventListener('click', hideDeleteWorkflowModal);
+            confirmDeleteWorkflowBtn.addEventListener('click', handleConfirmDeleteWorkflow);
 
             function initialize() {
                 loadMasterData();
@@ -792,3 +671,4 @@
 
 </body>
 </html>
+

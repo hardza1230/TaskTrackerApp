@@ -1,6 +1,6 @@
 // preload.js
 
-const { contextBridge, ipcRenderer } = require('electron'); // Add ipcRenderer
+const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose a secure API to the renderer process (your index.html)
 contextBridge.exposeInMainWorld('electronAPI', {
