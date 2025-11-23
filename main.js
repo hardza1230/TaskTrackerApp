@@ -1,61 +1,75 @@
-// main.js
-
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
-// Function to create the main application window
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1280,
+    height: 900,
     webPreferences: {
-      // Attach the preload script to the renderer process
       preload: path.join(__dirname, 'preload.js'),
-      // Important for security: keep these settings
       contextIsolation: true,
       nodeIntegration: false,
     }
   });
 
-  // Load the index.html file into the window
   mainWindow.loadFile('index.html');
-
-  // Optional: Open DevTools for debugging
-  // mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools(); // Uncomment เพื่อ Debug
 };
 
-// This method is called when Electron has finished initialization
 app.whenReady().then(() => {
-  // Add IPC handler to listen for 'open-file' requests
+  // 1. เปิดไฟล์/ลิงก์
   ipcMain.handle('open-file', async (event, filePath) => {
     try {
-      // shell.openPath returns a promise resolving to an error string if it fails
       const errorMessage = await shell.openPath(filePath);
-      if (errorMessage) {
-        // If there's an error message, send it back
-        return { success: false, error: errorMessage };
-      }
-      // If successful, send success status
-      return { success: true };
+      return errorMessage ? { success: false, error: errorMessage } : { success: true };
     } catch (error) {
-      // If an unexpected error occurs, send that back
+      return { success: false, error: error.message };
+    }
+  });
+
+  // 2. ฟังก์ชันใหม่: Watch List (สแกนหาไฟล์ล่าสุด)
+  ipcMain.handle('scan-folder', async (event, folderPath) => {
+    try {
+      if (!fs.existsSync(folderPath)) {
+        return { success: false, error: 'ไม่พบ Path หรือเข้าถึงไม่ได้' };
+      }
+
+      const files = fs.readdirSync(folderPath);
+      
+      // ดึงข้อมูลและกรองเฉพาะไฟล์
+      const fileDetails = files.map(file => {
+        const fullPath = path.join(folderPath, file);
+        try {
+          const stats = fs.statSync(fullPath);
+          return {
+            name: file,
+            path: fullPath,
+            mtime: stats.mtime, // เวลาแก้ไขล่าสุด
+            isFile: stats.isFile()
+          };
+        } catch (e) { return null; }
+      }).filter(f => f && f.isFile);
+
+      // เรียงจากใหม่ไปเก่า -> เอาแค่ 5 ไฟล์ล่าสุด
+      const recentFiles = fileDetails
+        .sort((a, b) => b.mtime - a.mtime)
+        .slice(0, 5);
+
+      return { success: true, files: recentFiles };
+
+    } catch (error) {
       return { success: false, error: error.message };
     }
   });
 
   createWindow();
 
-  // Handle macOS behavior
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-// Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  if (process.platform !== 'darwin') app.quit();
 });

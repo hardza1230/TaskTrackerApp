@@ -4,671 +4,736 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Task Tracker Pro</title>
+    <title>Planner Want to Go Home V.1.3</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Sarabun', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            start: '#4F46E5', // Indigo-600
+                            end: '#9333EA',   // Purple-600
+                            light: '#EEF2FF'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --bg-main: #f8f9fa;
-            --bg-sidebar: #ffffff;
-            --bg-header: #f0f2f5;
-            --bg-card: #ffffff;
-            --text-primary: #1a202c;
-            --text-secondary: #718096;
-            --primary: #6366f1;
-            --primary-light: #e0e7ff;
-            --accent: #14b8a6;
-            --danger: #ef4444;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+        body { background-color: #F3F4F6; font-family: 'Sarabun', sans-serif; overflow: hidden; }
+        
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        /* Sidebar Gradient */
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%);
         }
-        @keyframes card-enter {
-            from { opacity: 0; transform: translateY(15px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes modal-enter {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        body {
-            font-family: 'Sarabun', 'Inter', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            overflow-x: hidden;
-        }
+
+        /* Glassmorphism Card */
         .task-card {
-            background-color: var(--bg-card);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid #e5e7eb;
-            align-self: start;
-            box-shadow: var(--shadow);
-            animation: card-enter 0.5s ease-out backwards;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(229, 231, 235, 0.5);
             position: relative;
+            overflow: hidden;
         }
-        .task-card:nth-child(2) { animation-delay: 0.05s; }
-        .task-card:nth-child(3) { animation-delay: 0.1s; }
-        .task-card:nth-child(4) { animation-delay: 0.15s; }
-        .task-card:nth-child(5) { animation-delay: 0.2s; }
-        .task-card:nth-child(6) { animation-delay: 0.25s; }
         .task-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: #A78BFA;
         }
-        .modal-overlay {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease-in-out;
-            z-index: 50;
+        .task-card::before {
+            content: ''; position: absolute; top: 0; left: 0; w: 100%; h: 4px;
+            background: linear-gradient(90deg, #4F46E5, #9333EA);
+            opacity: 0; transition: opacity 0.3s;
         }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
+        .task-card:hover::before { opacity: 1; }
+
+        /* Checkbox Styling */
+        .custom-checkbox {
+            appearance: none;
+            width: 1.25rem; height: 1.25rem;
+            border: 2px solid #CBD5E1; border-radius: 6px;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s; cursor: pointer;
         }
-        .modal-overlay.active .modal-box {
-            animation: modal-enter 0.3s ease-out forwards;
+        .custom-checkbox:checked {
+            background-color: #7C3AED; border-color: #7C3AED;
         }
-        .progress-bar-fg { background-color: var(--accent); transition: width 0.4s ease-in-out, background 0.4s ease-in-out; }
-        .task-item input:checked + label { text-decoration: line-through; color: var(--text-secondary); }
-        .task-item input:checked + label .task-link-btn { color: var(--text-secondary); }
-        .task-link-btn { background: none; border: none; padding: 0; color: var(--primary); cursor: pointer; text-align: left; }
-        .shortcut-btn { background-color: #ffffff; color: #374151; border: 1px solid #d1d5db; transition: all 0.2s ease-in-out; width: 100%; text-align: left; }
-        .shortcut-btn:hover { background-color: #f9fafb; border-color: #9ca3af; transform: translateY(-2px); }
-        .modal-box { transition: all 0.2s ease-in-out; }
-        .edit-action-btn { background: none; border: none; cursor: pointer; color: #9ca3af; transition: color 0.2s; }
-        .edit-action-btn:hover { color: var(--danger); }
-        .drag-handle { cursor: grab; color: #9ca3af; }
-        .sortable-ghost { opacity: 0.4; background: #cce7ff; }
-        .sortable-chosen { cursor: grabbing; }
-        .sidebar { width: 18rem; transition: width 0.3s ease-in-out; }
-        .sidebar.collapsed { width: 5rem; }
-        .sidebar-link-text { opacity: 1; transition: opacity 0.2s ease-in-out; }
-        .sidebar.collapsed .sidebar-link-text { opacity: 0; width: 0; pointer-events: none; }
-        .card-action-button {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            width: 32px;
-            height: 32px;
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f3f4f6;
-            color: #6b7280;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-            z-index: 10;
+        .custom-checkbox:checked::after {
+            content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            color: white; font-size: 0.75rem;
         }
-        .card-action-button:hover {
-            background-color: #e5e7eb;
-            transform: scale(1.1);
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        /* Watch List Active State */
+        .watching-active {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            border-color: #6366F1;
         }
-        .run-macro-btn:hover { color: var(--primary); }
-        .delete-workflow-btn:hover { color: var(--danger); }
-        .icon-picker-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-            gap: 0.5rem;
+        
+        /* Edit Mode Input Highlight */
+        .edit-input {
+            border-bottom: 2px solid #E2E8F0;
+            transition: border-color 0.2s;
         }
-        .icon-picker-item {
-            display: flex; align-items: center; justify-content: center;
-            width: 40px; height: 40px; border: 1px solid #e5e7eb;
-            border-radius: 0.5rem; cursor: pointer; transition: background-color 0.2s;
+        .edit-input:focus {
+            border-color: #6366F1;
+            outline: none;
         }
-        .icon-picker-item:hover { background-color: #f3f4f6; }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-slate-800 h-screen flex">
 
-    <div class="flex">
-        <aside id="sidebar" class="sidebar h-screen sticky top-0 bg-white shadow-lg p-4 flex flex-col">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold sidebar-link-text" style="color: var(--primary);">Menu</h2>
-                <button id="sidebar-toggle-btn" class="p-2 rounded-md hover:bg-gray-100">
-                    <i class="fa-solid fa-bars"></i>
+    <!-- Sidebar (Fixed Width 64 = 16rem) -->
+    <aside id="sidebar" class="w-64 sidebar-gradient flex flex-col shadow-2xl z-20 flex-shrink-0">
+        <div class="p-6 flex items-center gap-4 text-white">
+            <div class="min-w-[2.5rem] h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold shadow-inner">
+                <i class="fa-solid fa-house-person-return"></i>
+            </div>
+            <h1 class="font-bold text-lg whitespace-nowrap">Planner Home</h1>
+        </div>
+
+        <div class="flex-grow py-4 px-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
+            <div class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mb-3 px-1">Shortcuts</div>
+            <div id="shortcuts-container" class="space-y-2">
+                <!-- Shortcuts Injected Here -->
+            </div>
+            
+            <button id="add-shortcut-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-indigo-100 border border-white/10 hover:bg-white/10 transition-colors mt-2 group">
+                <i class="fa-solid fa-plus group-hover:scale-110 transition-transform"></i>
+                <span class="text-sm font-medium">Add Shortcut</span>
+            </button>
+        </div>
+
+        <div class="p-4 border-t border-white/10 bg-black/10 space-y-2">
+            <!-- Import/Export Group -->
+            <div class="flex gap-2">
+                <!-- Import Button (New) -->
+                <button id="import-template-btn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20" title="Import JSON">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span class="text-sm">Import</span>
+                </button>
+                
+                <!-- Export Button -->
+                <button id="export-template-btn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20" title="Export JSON">
+                    <i class="fa-solid fa-file-export"></i>
+                    <span class="text-sm">Export</span>
                 </button>
             </div>
             
-            <nav class="space-y-2 mb-6">
-                <a href="#" id="nav-workflows" class="nav-link flex items-center p-3 rounded-lg font-semibold" style="background-color: var(--primary-light); color: var(--primary);">
-                    <i class="fa-solid fa-check-double w-8 text-center"></i>
-                    <span class="sidebar-link-text ml-2">Workflows</span>
-                </a>
-            </nav>
+            <!-- Reset Button -->
+            <button id="reset-day-btn" class="w-full flex items-center gap-3 px-3 py-2 text-red-200 hover:text-white hover:bg-red-500/20 rounded-lg transition-all" title="Factory Reset">
+                <i class="fa-solid fa-power-off w-5 text-center"></i>
+                <span class="text-sm">Reset Data</span>
+            </button>
+        </div>
+    </aside>
 
-            <h3 class="text-xl font-bold mb-4 sidebar-link-text" style="color: var(--primary);">Shortcuts</h3>
-            <div id="shortcuts-container" class="space-y-2 mb-6"></div>
-
-            <h3 class="text-xl font-bold mb-4 sidebar-link-text" style="color: var(--primary);">เครื่องมือ</h3>
-            <div id="tools-container" class="space-y-2">
-                 <button id="import-template-btn" class="shortcut-btn rounded-lg px-3 py-2 font-semibold flex items-center hover:bg-gray-100">
-                    <i class="fas fa-file-import w-8 text-center text-indigo-500"></i>
-                    <span class="sidebar-link-text ml-2">Import Template</span>
-                </button>
-                 <button id="export-template-btn" class="shortcut-btn rounded-lg px-3 py-2 font-semibold flex items-center hover:bg-gray-100">
-                    <i class="fas fa-file-export w-8 text-center text-teal-500"></i>
-                    <span class="sidebar-link-text ml-2">Export Template</span>
-                </button>
-                 <button id="save-html-btn" class="shortcut-btn rounded-lg px-3 py-2 font-semibold flex items-center hover:bg-gray-100">
-                    <i class="fas fa-save w-8 text-center text-green-500"></i>
-                    <span class="sidebar-link-text ml-2">บันทึกเป็น HTML</span>
-                </button>
-            </div>
-        </aside>
-
-        <div class="flex-grow">
-            <div id="workspace-workflows" class="container mx-auto p-4 md:p-8 max-w-7xl">
-                <header class="mb-6 sticky top-0 z-10 py-4 -mx-8 px-8" style="background-color: var(--bg-header);">
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                         <h1 class="text-3xl md:text-4xl font-bold" style="color: var(--text-primary);">Daily Workflow Tracker</h1>
-                         <div class="relative flex-grow max-w-md">
-                            <input type="search" id="search-input" placeholder="ค้นหา Workflow หรือ Task..." class="w-full bg-white p-2 pl-10 border rounded-lg shadow-sm focus:ring-2 outline-none transition" style="border-color: #e2e8f0; --tw-ring-color: var(--primary);">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                         </div>
-                         <div class="flex items-center gap-2">
-                            <input type="date" id="date-picker" class="bg-white p-2 border border-gray-300 rounded-lg shadow-sm">
-                            <button id="today-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold">วันนี้</button>
-                         </div>
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col h-screen overflow-hidden bg-[#F3F4F6] relative">
+        
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 z-10 sticky top-0 shadow-sm">
+            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                        Planner Want to Go Home <span class="text-sm font-light text-gray-400">V.1.3</span>
+                    </h2>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span id="current-date-display" class="text-sm font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">Today</span>
+                        <span id="clock-display" class="text-sm font-bold text-indigo-600 w-24 inline-block text-center font-mono bg-indigo-50 rounded px-2">--:--:--</span>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-md border border-gray-200">
-                        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
-                            <h2 class="text-xl font-bold text-gray-800">ภาพรวมความคืบหน้า</h2>
-                            <div class="flex items-center gap-4">
-                                <span id="main-progress-details" class="font-semibold text-lg" style="color: var(--text-secondary);">0/0 Tasks</span>
-                                <span id="main-progress-text" class="text-2xl font-bold" style="color: var(--accent);">0%</span>
+                </div>
+
+                <!-- Right Controls -->
+                <div class="flex gap-4 items-start w-full xl:w-auto justify-end">
+                    
+                     <!-- WATCH LIST WIDGET -->
+                    <div class="relative group/watch z-50">
+                        <div id="watch-status-indicator" class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer">
+                            <div class="relative">
+                                <div class="w-2 h-2 rounded-full bg-gray-300" id="watch-dot"></div>
+                                <div class="w-2 h-2 rounded-full bg-gray-300 absolute top-0 left-0 animate-ping opacity-0" id="watch-ping"></div>
+                            </div>
+                            <div class="flex flex-col leading-none">
+                                <span class="text-[10px] font-bold text-gray-400">WATCH LIST</span>
+                                <span class="text-xs font-semibold text-gray-700" id="watch-status-text">Inactive</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-gray-400 text-xs ml-1 transition-transform group-hover/watch:rotate-180"></i>
+                        </div>
+                        
+                        <!-- Watch List Dropdown -->
+                        <div class="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 hidden group-hover/watch:block hover:block animate-fade-in">
+                            <div class="mb-3">
+                                <label class="text-[10px] font-bold text-indigo-500 block mb-1 uppercase">Monitor Folder Path</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="watch-path-input" class="w-full text-xs border rounded p-1.5 bg-gray-50 focus:ring-1 focus:ring-indigo-500 outline-none" placeholder="Paste folder path here...">
+                                    <button id="save-watch-btn" class="text-xs bg-indigo-600 text-white px-2.5 rounded hover:bg-indigo-700 transition-colors"><i class="fa-solid fa-save"></i></button>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1">*Auto-scans every 5 mins</p>
+                            </div>
+                            <div class="border-t border-gray-100 pt-2">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-[10px] font-bold text-gray-500">LATEST 5 FILES</span>
+                                    <button id="refresh-watch-btn" class="text-indigo-500 hover:text-indigo-700 p-1" title="Scan Now"><i class="fa-solid fa-rotate"></i></button>
+                                </div>
+                                <div id="watch-list-items" class="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                                    <div class="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No folder configured</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-4">
-                            <div id="main-progress-bar" class="progress-bar-fg h-4 rounded-full"></div>
-                        </div>
                     </div>
-                </header>
-                <div class="flex justify-end flex-wrap gap-3 my-4">
-                    <button id="edit-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold text-white border-transparent" style="background-color: var(--primary);"><i class="fas fa-pencil-alt mr-2"></i>แก้ไขรายการ</button>
-                    <button id="clear-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-red-500 text-white border-red-600 hover:bg-red-600"><i class="fas fa-trash mr-2"></i>ล้างข้อมูลวันนี้</button>
+
+                    <!-- Date & Edit Controls -->
+                    <div class="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+                        <input type="date" id="date-picker" class="border-none text-sm text-gray-600 focus:ring-0 cursor-pointer w-32">
+                        <button id="today-btn" class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center font-bold text-xs" title="Go to Today">T</button>
+                    </div>
+
+                    <button id="edit-mode-btn" class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl shadow-sm transition-all text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit</span>
+                    </button>
                 </div>
-                <main id="task-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></main>
             </div>
-        </div>
-    </div>
 
-    <div id="clear-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform">
-            <h3 class="text-xl font-bold mb-4">ยืนยันการล้างข้อมูล</h3>
-            <p class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลงานทั้งหมดสำหรับวันที่เลือก? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-            <div class="flex justify-end gap-3">
-                <button id="cancel-clear-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold">ยกเลิก</button>
-                <button id="confirm-clear-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-red-500 text-white border-red-600 hover:bg-red-600">ยืนยัน</button>
+            <!-- Progress Bar -->
+            <div class="mt-4 relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div id="overall-progress-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(79,70,229,0.5)]" style="width: 0%"></div>
             </div>
-        </div>
-    </div>
+        </header>
 
-    <div id="delete-workflow-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-md transform">
-            <h3 class="text-xl font-bold mb-4">ยืนยันการลบ Workflow</h3>
-            <p class="text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการลบ Workflow <strong id="workflow-to-delete-name"></strong>? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-            <div class="flex justify-end gap-3">
-                <button id="cancel-delete-workflow-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold">ยกเลิก</button>
-                <button id="confirm-delete-workflow-btn" class="shortcut-btn !w-auto rounded-lg px-4 py-2 font-semibold bg-red-500 text-white border-red-600 hover:bg-red-600">ยืนยัน</button>
+        <!-- Content Area -->
+        <div id="scroll-container" class="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar">
+            <div id="task-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20">
+                <!-- Cards will be injected here -->
             </div>
         </div>
-    </div>
 
-    <div id="icon-picker-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="modal-box bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold">เลือกไอคอน</h3>
-                <button id="close-icon-picker-btn" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+        <!-- Add Workflow FAB -->
+        <button id="add-workflow-fab" class="hidden fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-lg shadow-indigo-300 hover:scale-110 hover:shadow-xl transition-all items-center justify-center text-2xl z-30">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
+            <div class="bg-gray-800/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700">
+                <i id="toast-icon" class="fa-solid fa-info-circle text-indigo-400"></i>
+                <span id="toast-message" class="text-sm font-medium">Notification</span>
             </div>
-            <div id="icon-picker-grid" class="icon-picker-grid max-h-64 overflow-y-auto"></div>
         </div>
-    </div>
-    <div id="notification" class="fixed bottom-5 right-5 bg-red-600 text-white p-4 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50 max-w-sm">
-        <h4 id="notification-title" class="font-bold mb-1">เกิดข้อผิดพลาด</h4>
-        <p id="notification-message" class="text-sm"></p>
-    </div>
+
+    </main>
+
+    <!-- Import Hidden Input -->
     <input type="file" id="import-file-input" class="hidden" accept=".json">
 
     <script>
+        // --- Core Application Logic ---
+
         if (typeof window.electronAPI === 'undefined') {
             window.electronAPI = {
-                openFile: async (path) => {
-                    if (path.startsWith('http')) { window.open(path, '_blank'); return { success: true }; }
-                    showNotification('จำลองการทำงาน', `การเปิดไฟล์ (${path}) ถูกจำลองขึ้น ในโปรแกรมจริงจะสามารถเปิดไฟล์ได้`, 'info');
-                    return { success: true };
+                openFile: async (path) => { console.log(`[Sim] Open: ${path}`); return { success: true }; },
+                scanFolder: async (path) => { 
+                    console.log(`[Sim] Scan: ${path}`); 
+                    return { success: true, files: [{name: 'SIM_Report_2025.xlsx', path: '#'}, {name: 'URGENT_PLAN.pdf', path: '#'}] }; 
                 }
             };
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const taskGrid = document.getElementById('task-grid');
-            const datePicker = document.getElementById('date-picker');
-            const todayBtn = document.getElementById('today-btn');
-            const editBtn = document.getElementById('edit-btn');
-            const saveHtmlBtn = document.getElementById('save-html-btn');
-            const clearBtn = document.getElementById('clear-btn');
-            const exportTemplateBtn = document.getElementById('export-template-btn');
-            const importTemplateBtn = document.getElementById('import-template-btn');
-            const importFileInput = document.getElementById('import-file-input');
-            const shortcutsContainer = document.getElementById('shortcuts-container');
-            const clearModal = document.getElementById('clear-modal');
-            const cancelClearBtn = document.getElementById('cancel-clear-btn');
-            const confirmClearBtn = document.getElementById('confirm-clear-btn');
-            const iconPickerModal = document.getElementById('icon-picker-modal');
-            const closeIconPickerBtn = document.getElementById('close-icon-picker-btn');
-            const iconPickerGrid = document.getElementById('icon-picker-grid');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-            const navWorkflows = document.getElementById('nav-workflows');
-            const workspaceWorkflows = document.getElementById('workspace-workflows');
-            const searchInput = document.getElementById('search-input');
-            const deleteWorkflowModal = document.getElementById('delete-workflow-modal');
-            const cancelDeleteWorkflowBtn = document.getElementById('cancel-delete-workflow-btn');
-            const confirmDeleteWorkflowBtn = document.getElementById('confirm-delete-workflow-btn');
-            const workflowToDeleteNameSpan = document.getElementById('workflow-to-delete-name');
+        const appState = {
+            currentDate: new Date(),
+            isEditMode: false,
+            masterData: [],
+            shortcuts: [],
+            progress: {},
+            watchPath: ''
+        };
 
-            let currentDate = new Date();
-            let isEditMode = false;
-            let tasksMasterData = [];
-            let shortcutsMasterData = [];
-            let currentShortcutIndex = null;
-            let sortableInstances = []; 
-            let workflowToDeleteId = null;
+        // --- DEFAULT DATA ---
+        const DEFAULT_DATA = [
+            { "id": 1, "title": "เตรียมโปรแกรมก่อนทำงาน", "tasks": [ { "name": "Login Citrix", "link": "microsoft-edge:http://172.16.10.80/Citrix/XenApp/auth/login.aspx" }, { "name": "เปิด Power Bi", "link": "D:\\Project\\0.Power Bi\\Planning\\Digital Management_PLP Version 2025 Rev.0.2.pbix" } ] }
+        ];
 
-            const availableIcons = ['fa-link', 'fa-shield-halved', 'fa-chart-line', 'fa-file-alt', 'fa-cogs', 'fa-database', 'fa-server', 'fa-cloud', 'fa-envelope', 'fa-folder-open', 'fa-globe', 'fa-print', 'fa-calculator', 'fa-camera', 'fa-video', 'fa-music'];
-            const defaultTasksData = [
-                 { id: 1, title: 'Open Styline', tasks: [{ name: 'เปิด Styline Daily report ใน Styline', link: '#' }, { name: 'เปิดแผนพิมพ์', link: '#' }] },
-                 { id: 4, title: 'Update ผลผลิตใน Power BI', tasks: [{ name: 'Update ข้อมูลใน excel ผลผลิต', link: '#' }, { name: 'Refresh Power BI (1. GHCQ Production)', link: '#' }] },
-                 { id: 6, title: 'Update Order Status', tasks: [{ name: 'เปิดไฟล์ Order Status จาก Styline', link: '#' }, { name: 'อัพเดท Order Status ด้วยไฟล์ excel แผนพิมพ์', link: '#' }] },
-            ];
-            const defaultShortcutsData = [
-                { id: 1, name: 'Connect VPN', link: 'C:\\Program Files\\Fortinet\\FortiClient\\FortiClient.exe', icon: 'fa-shield-halved' },
-                { id: 2, name: 'Power BI', link: '#', icon: 'fa-chart-line' },
-            ];
+        // --- Watch List Logic ---
+        async function updateWatchList() {
+            const listContainer = document.getElementById('watch-list-items');
+            const indicator = document.getElementById('watch-dot');
+            const ping = document.getElementById('watch-ping');
+            const statusText = document.getElementById('watch-status-text');
+            const wrapper = document.getElementById('watch-status-indicator');
 
-            function loadMasterData() {
-                const savedTasks = localStorage.getItem('tasksMasterData');
-                tasksMasterData = savedTasks ? JSON.parse(savedTasks) : defaultTasksData;
-                const savedShortcuts = localStorage.getItem('shortcutsMasterData');
-                shortcutsMasterData = savedShortcuts ? JSON.parse(savedShortcuts) : defaultShortcutsData;
+            if (!appState.watchPath) {
+                listContainer.innerHTML = '<div class="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No folder configured</div>';
+                indicator.className = 'w-2 h-2 rounded-full bg-gray-300';
+                ping.className = 'hidden';
+                statusText.innerText = 'Inactive';
+                wrapper.classList.remove('watching-active');
+                return;
             }
+
+            indicator.className = 'w-2 h-2 rounded-full bg-yellow-400';
+            statusText.innerText = 'Scanning...';
             
-            function formatDate(date) {
-                const d = new Date(date);
-                let month = '' + (d.getMonth() + 1), day = '' + d.getDate(), year = d.getFullYear();
-                if (month.length < 2) month = '0' + month; if (day.length < 2) day = '0' + day;
-                return [year, month, day].join('-');
-            }
-
-            function showNotification(title, message, type = 'error') {
-                const notification = document.getElementById('notification');
-                const titleEl = document.getElementById('notification-title');
-                const messageEl = document.getElementById('notification-message');
-                titleEl.textContent = title;
-                messageEl.textContent = message;
-                notification.classList.remove('bg-red-600', 'bg-blue-600', 'bg-green-600');
-                if (type === 'info') { notification.classList.add('bg-blue-600'); } 
-                else if (type === 'success') { notification.classList.add('bg-green-600'); } 
-                else { notification.classList.add('bg-red-600'); }
-                notification.classList.remove('opacity-0', 'pointer-events-none');
-                setTimeout(() => { notification.classList.add('opacity-0', 'pointer-events-none'); }, 6000);
-            }
-
-            function renderShortcuts() {
-                shortcutsContainer.innerHTML = '';
-                shortcutsMasterData.forEach((shortcut, index) => {
-                    if (isEditMode) {
-                        const editDiv = document.createElement('div');
-                        editDiv.className = 'flex items-center gap-2 p-2 border rounded-lg w-full';
-                        editDiv.innerHTML = `<button class="change-icon-btn shortcut-btn !p-2 !w-auto" data-shortcut-index="${index}"><i class="fas ${shortcut.icon || 'fa-link'}"></i></button><div class="flex flex-col gap-1 flex-grow"><input type="text" value="${shortcut.name}" data-type="name" data-shortcut-index="${index}" class="p-1 border rounded text-sm w-full" placeholder="Shortcut Name"><input type="text" value="${shortcut.link}" data-type="link" data-shortcut-index="${index}" class="p-1 border rounded text-xs text-gray-500 w-full" placeholder="File Path or URL"></div><button class="remove-shortcut-btn edit-action-btn" data-shortcut-index="${index}"><i class="fas fa-trash-alt"></i></button>`;
-                        shortcutsContainer.appendChild(editDiv);
-                    } else {
-                        const button = document.createElement('button');
-                        button.className = 'shortcut-btn rounded-lg px-3 py-2 font-semibold flex items-center';
-                        button.dataset.link = shortcut.link;
-                        button.innerHTML = `<i class="fas ${shortcut.icon || 'fa-link'} mr-3 w-5 text-center"></i><span class="sidebar-link-text">${shortcut.name}</span>`;
-                        button.addEventListener('click', async () => {
-                            if (button.dataset.link && button.dataset.link !== '#') {
-                                const result = await window.electronAPI.openFile(button.dataset.link);
-                                if (!result.success) { showNotification('เกิดข้อผิดพลาด', `ไม่สามารถเปิด Shortcut ได้: ${result.error}`); }
-                            }
-                        });
-                        shortcutsContainer.appendChild(button);
-                    }
-                });
-                if(isEditMode) {
-                    const addButton = document.createElement('button');
-                    addButton.id = 'add-shortcut-btn';
-                    addButton.className = 'shortcut-btn rounded-lg px-3 py-2 text-indigo-500 border-indigo-200 hover:bg-indigo-50 flex items-center';
-                    addButton.innerHTML = '<i class="fas fa-plus mr-2"></i><span class="sidebar-link-text">Add Shortcut</span>';
-                    shortcutsContainer.appendChild(addButton);
-                }
-            }
-
-            function renderTasks(date) {
-                currentDate = date;
-                taskGrid.innerHTML = '';
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                const filteredWorkflows = tasksMasterData.filter(workflow => {
-                    if (!searchTerm) return true;
-                    const titleMatch = workflow.title.toLowerCase().includes(searchTerm);
-                    const taskMatch = workflow.tasks.some(task => task.name.toLowerCase().includes(searchTerm));
-                    return titleMatch || taskMatch;
-                });
-
-                filteredWorkflows.forEach(workflow => {
-                    const card = document.createElement('div');
-                    card.className = 'task-card';
-                    card.dataset.workflowId = workflow.id;
-                    
-                    let tasksHtml = workflow.tasks.map((task, index) => {
-                        const taskId = `task-${workflow.id}-${index}`;
-                        if (isEditMode) {
-                            return `<div class="task-item-edit flex items-center gap-2 mb-2 p-2 border rounded-md bg-gray-50" data-task-index="${index}">
-                                        <div class="flex-grow">
-                                            <input type="text" value="${task.name}" data-type="name" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded mb-1 text-sm" placeholder="Task Name">
-                                            <input type="text" value="${task.link || ''}" data-type="link" data-workflow-id="${workflow.id}" data-task-index="${index}" class="w-full p-1 border rounded text-xs text-gray-500" placeholder="File Path or URL">
-                                        </div>
-                                        <button class="remove-task-btn edit-action-btn" data-workflow-id="${workflow.id}" data-task-index="${index}" title="ลบ Task นี้"><i class="fas fa-trash-alt"></i></button>
-                                    </div>`;
-                        } else {
-                            const linkElement = (task.link && task.link !== '#') ? `<button class="task-link-btn hover:underline text-left" data-link="${task.link}">${task.name} <i class="fas ${task.link.startsWith('http') ? 'fa-external-link-alt' : 'fa-folder-open'} fa-xs opacity-60"></i></button>` : task.name;
-                            return `<div class="task-item flex items-center mb-2 last:mb-0"><input type="checkbox" id="${taskId}" class="h-5 w-5 rounded border-gray-300 focus:ring-0 cursor-pointer flex-shrink-0" style="color: var(--primary);"><label for="${taskId}" class="ml-3 text-gray-700 cursor-pointer">${linkElement}</label></div>`;
-                        }
-                    }).join('');
-                    
-                    if (isEditMode) {
-                        tasksHtml += `<button class="add-task-btn mt-2 text-sm hover:underline w-full text-left p-2 rounded-md hover:bg-indigo-50" style="color: var(--primary);"><i class="fas fa-plus mr-1"></i> เพิ่ม Task</button>`;
-                    }
-                    
-                    const titleElement = isEditMode ? `<input type="text" value="${workflow.title}" data-workflow-id="${workflow.id}" class="workflow-title-input text-lg font-bold text-gray-900 bg-transparent border-b-2 border-transparent focus:border-indigo-500 outline-none w-full">` : `<h3 class="text-lg font-bold text-gray-900">${workflow.id}. ${workflow.title}</h3>`;
-                    
-                    const cardHeader = `
-                        <div class="flex justify-between items-start mb-3 gap-2">
-                            ${isEditMode ? '<span class="drag-handle pt-1 pr-2"><i class="fas fa-grip-vertical"></i></span>' : ''}
-                            <div class="flex-grow">${titleElement}</div>
-                            ${!isEditMode ? `<span id="progress-text-${workflow.id}" class="font-semibold text-gray-500 pt-1">0%</span>` : ''}
-                        </div>`;
-                        
-                    const macroButton = (!isEditMode && workflow.tasks.some(t => t.link && t.link !== '#')) 
-                        ? `<button class="run-macro-btn card-action-button" data-workflow-id="${workflow.id}" title="Run all tasks"><i class="fas fa-play"></i></button>` 
-                        : '';
-
-                    const deleteWorkflowButton = isEditMode
-                        ? `<button class="delete-workflow-btn card-action-button" data-workflow-id="${workflow.id}" title="Delete workflow"><i class="fas fa-trash-alt"></i></button>`
-                        : '';
-
-                    card.innerHTML = `${macroButton}${deleteWorkflowButton}<div class="p-5">${cardHeader}${!isEditMode && workflow.tasks.length > 0 ? `<div class="w-full bg-gray-200 rounded-full h-2.5 mb-4"><div id="progress-bar-${workflow.id}" class="progress-bar-fg h-2.5 rounded-full"></div></div>` : ''}<div class="task-list flex-grow" data-workflow-id="${workflow.id}">${tasksHtml}</div></div>`;
-                    taskGrid.appendChild(card);
-                });
-
-                if (isEditMode) {
-                    const addWorkflowCard = document.createElement('button');
-                    addWorkflowCard.id = 'add-workflow-btn';
-                    addWorkflowCard.className = 'task-card bg-white/50 hover:bg-white border-2 border-dashed border-gray-300 hover:border-indigo-400 rounded-xl shadow-sm p-5 flex flex-col items-center justify-center text-gray-400 hover:text-indigo-500 transition-colors duration-200 min-h-[150px]';
-                    addWorkflowCard.innerHTML = `<i class="fas fa-plus fa-2x mb-2"></i><span class="font-semibold">Add New Workflow</span>`;
-                    taskGrid.appendChild(addWorkflowCard);
-                }
-
-                if (!isEditMode) {
-                    taskGrid.querySelectorAll('.task-item input[type="checkbox"]').forEach(checkbox => checkbox.addEventListener('change', () => { updateProgress(); saveProgress(); }));
-                    loadProgress(); updateProgress();
-                } else { initializeSortable(); }
-            }
+            const result = await window.electronAPI.scanFolder(appState.watchPath);
+            listContainer.innerHTML = '';
             
-            function renderAll(date) { renderShortcuts(); renderTasks(date); }
-
-            function saveProgress() {
-                const dateKey = `dailyTaskProgress-${formatDate(currentDate)}`;
-                const progressState = {};
-                document.querySelectorAll('#task-grid .task-item input[type="checkbox"]').forEach(cb => { progressState[cb.id] = cb.checked; });
-                localStorage.setItem(dateKey, JSON.stringify(progressState));
-            }
-
-            function loadProgress() {
-                const dateKey = `dailyTaskProgress-${formatDate(currentDate)}`;
-                const savedProgress = localStorage.getItem(dateKey);
-                if (savedProgress) {
-                    const progressState = JSON.parse(savedProgress);
-                    Object.keys(progressState).forEach(id => {
-                        const cb = document.getElementById(id);
-                        if (cb) cb.checked = progressState[id];
-                    });
-                }
-            }
-
-            function updateProgress() {
-                let totalTasksOverall = 0;
-                let completedTasksOverall = 0;
-                const renderedWorkflows = Array.from(taskGrid.querySelectorAll('.task-card[data-workflow-id]'));
+            if (result.success && result.files && result.files.length > 0) {
+                indicator.className = 'w-2 h-2 rounded-full bg-green-500';
+                ping.className = 'w-2 h-2 rounded-full bg-green-500 absolute top-0 left-0 animate-ping opacity-75';
+                statusText.innerText = 'Active';
+                wrapper.classList.add('watching-active');
                 
-                renderedWorkflows.forEach(card => {
-                    const checkboxes = card.querySelectorAll('input[type="checkbox"]');
-                    if (checkboxes.length > 0) {
-                        const completedInCard = Array.from(checkboxes).filter(cb => cb.checked).length;
-                        const totalInCard = checkboxes.length;
-                        totalTasksOverall += totalInCard;
-                        completedTasksOverall += completedInCard;
-                        const percentage = (completedInCard / totalInCard) * 100;
-                        const bar = card.querySelector(`#progress-bar-${card.dataset.workflowId}`);
-                        const text = card.querySelector(`#progress-text-${card.dataset.workflowId}`);
-                        if(bar) bar.style.width = `${percentage}%`;
-                        if(text) text.textContent = `${Math.round(percentage)}%`;
-                    }
+                result.files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-2.5 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 rounded-lg cursor-pointer transition-all group mb-1';
+                    div.onclick = () => window.electronAPI.openFile(file.path);
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2.5 overflow-hidden">
+                            <div class="w-8 h-8 rounded bg-white flex items-center justify-center text-indigo-500 shadow-sm border border-indigo-50">
+                                <i class="fa-solid fa-file-lines text-xs"></i>
+                            </div>
+                            <div class="flex flex-col overflow-hidden">
+                                <span class="text-xs text-indigo-900 truncate font-semibold">${file.name}</span>
+                                <span class="text-[10px] text-gray-500 truncate">Click to open</span>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-indigo-300 group-hover:text-indigo-600 transition-colors"></i>
+                    `;
+                    listContainer.appendChild(div);
                 });
+            } else {
+                indicator.className = 'w-2 h-2 rounded-full bg-gray-400';
+                ping.className = 'hidden';
+                statusText.innerText = 'No Files';
+                wrapper.classList.remove('watching-active');
+                listContainer.innerHTML = `<div class="text-xs text-gray-500 text-center py-4 bg-gray-50 rounded-lg">${result.error || 'No recent files found'}</div>`;
+            }
+        }
 
-                document.getElementById('main-progress-details').textContent = `${completedTasksOverall}/${totalTasksOverall} Tasks`;
-                const overallPercentage = totalTasksOverall > 0 ? (completedTasksOverall / totalTasksOverall) * 100 : 0;
-                const mainBar = document.getElementById('main-progress-bar');
-                mainBar.style.width = `${overallPercentage}%`;
+        // --- Initialization ---
+        function init() {
+            loadData();
+            setupEventListeners();
+            renderAll();
+            startClock();
+            if(appState.watchPath) updateWatchList();
+            setInterval(() => { if(appState.watchPath) updateWatchList(); }, 300000); 
+        }
+
+        function loadData() {
+            const savedPath = localStorage.getItem('watchFolderPath');
+            appState.watchPath = savedPath || '';
+            document.getElementById('watch-path-input').value = appState.watchPath;
+
+            const savedData = localStorage.getItem('taskMasterData');
+            if (savedData) {
+                appState.masterData = JSON.parse(savedData);
+            } else {
+                appState.masterData = DEFAULT_DATA;
+            }
+            
+            const savedShortcuts = localStorage.getItem('shortcutData');
+            appState.shortcuts = savedShortcuts ? JSON.parse(savedShortcuts) : [];
+
+            loadProgress();
+        }
+
+        function loadProgress() {
+            const key = `progress_${appState.currentDate.toISOString().split('T')[0]}`;
+            appState.progress = JSON.parse(localStorage.getItem(key)) || {};
+        }
+
+        function saveData() {
+            localStorage.setItem('taskMasterData', JSON.stringify(appState.masterData));
+            localStorage.setItem('shortcutData', JSON.stringify(appState.shortcuts));
+            localStorage.setItem('watchFolderPath', appState.watchPath);
+        }
+
+        function saveProgress() {
+            const key = `progress_${appState.currentDate.toISOString().split('T')[0]}`;
+            localStorage.setItem(key, JSON.stringify(appState.progress));
+            updateProgressBar();
+        }
+
+        // --- Rendering ---
+        function renderAll() {
+            renderDate();
+            renderShortcuts();
+            renderTasks();
+            updateProgressBar();
+            updateEditModeUI();
+        }
+
+        function renderDate() {
+            const options = { weekday: 'short', day: 'numeric', month: 'short' };
+            document.getElementById('current-date-display').innerText = appState.currentDate.toLocaleDateString('en-US', options); 
+            document.getElementById('date-picker').value = appState.currentDate.toISOString().split('T')[0];
+        }
+
+        function renderShortcuts() {
+            const container = document.getElementById('shortcuts-container');
+            container.innerHTML = '';
+            appState.shortcuts.forEach((sc, idx) => {
+                const btn = document.createElement('div');
                 
-                const red = [239, 68, 68], yellow = [234, 179, 8], green = [34, 197, 94];
-                let color;
-                if (overallPercentage < 50) {
-                    color = red.map((c, i) => Math.round(c + (overallPercentage / 50) * (yellow[i] - c)));
+                if(appState.isEditMode) {
+                    btn.className = 'flex flex-col gap-1 p-3 bg-white/10 rounded-lg border border-white/20 mb-3';
+                    btn.innerHTML = `
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[10px] font-bold text-indigo-200 uppercase">Shortcut Name</label>
+                            <input type="text" value="${sc.name}" class="text-xs bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none focus:border-white/50" onchange="updateShortcut(${idx}, 'name', this.value)">
+                        </div>
+                        <div class="flex flex-col gap-1 mt-1">
+                            <label class="text-[10px] font-bold text-indigo-200 uppercase">File Path / URL</label>
+                            <input type="text" value="${sc.link}" class="text-[10px] bg-black/20 text-indigo-100 rounded p-1 border border-white/10 focus:outline-none focus:border-white/50" onchange="updateShortcut(${idx}, 'link', this.value)">
+                        </div>
+                        <button onclick="deleteShortcut(${idx})" class="text-[10px] text-red-300 hover:text-red-100 bg-red-500/20 py-1 rounded mt-1">Delete</button>
+                    `;
                 } else {
-                    color = yellow.map((c, i) => Math.round(c + ((overallPercentage - 50) / 50) * (green[i] - c)));
+                    btn.className = 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-indigo-50 hover:bg-white/10 hover:text-white transition-all cursor-pointer group/item border border-transparent hover:border-white/10';
+                    btn.onclick = () => window.electronAPI.openFile(sc.link);
+                    btn.innerHTML = `
+                        <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center group-hover/item:bg-white/20 transition-colors">
+                            <i class="fa-solid fa-bolt text-sm text-yellow-300"></i>
+                        </div>
+                        <span class="whitespace-nowrap text-sm font-medium">${sc.name}</span>
+                    `;
                 }
-                mainBar.style.backgroundColor = `rgb(${color.join(',')})`;
-                document.getElementById('main-progress-text').textContent = `${Math.round(overallPercentage)}%`;
-            }
-            
-            function initializeSortable() {
-                destroySortable();
-                const gridSortable = new Sortable(taskGrid, { 
-                    animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen',
-                    filter: '#add-workflow-btn',
-                    onEnd: e => {
-                        const [moved] = tasksMasterData.splice(e.oldIndex, 1);
-                        tasksMasterData.splice(e.newIndex, 0, moved);
-                    } 
-                });
-                sortableInstances.push(gridSortable);
-                taskGrid.querySelectorAll('.task-list').forEach(list => {
-                    const workflowId = parseInt(list.dataset.workflowId);
-                    new Sortable(list, { 
-                        group: `tasks-${workflowId}`, animation: 150, ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen', 
-                        onEnd: e => { 
-                            const wf = tasksMasterData.find(w => w.id === workflowId); 
-                            if (wf) { 
-                                const [moved] = wf.tasks.splice(e.oldIndex, 1); 
-                                wf.tasks.splice(e.newIndex, 0, moved); 
-                            } 
-                        } 
-                    });
-                });
-            }
-            function destroySortable() { sortableInstances.forEach(i => i.destroy()); sortableInstances = []; }
-
-            function handleEditToggle() {
-                isEditMode = !isEditMode;
-                if (isEditMode) {
-                    editBtn.innerHTML = `<i class="fas fa-save mr-2"></i>บันทึก`;
-                    editBtn.style.backgroundColor = 'var(--accent)';
-                } else {
-                    taskGrid.querySelectorAll('.workflow-title-input').forEach(i => { const wf = tasksMasterData.find(w => w.id === parseInt(i.dataset.workflowId)); if (wf) wf.title = i.value; });
-                    taskGrid.querySelectorAll('.task-item-edit input').forEach(i => { const wf = tasksMasterData.find(w => w.id === parseInt(i.dataset.workflowId)); if (wf && wf.tasks[parseInt(i.dataset.taskIndex)]) { wf.tasks[parseInt(i.dataset.taskIndex)][i.dataset.type] = i.value; } });
-                    localStorage.setItem('tasksMasterData', JSON.stringify(tasksMasterData));
-                    shortcutsContainer.querySelectorAll('input').forEach(i => { if (shortcutsMasterData[parseInt(i.dataset.shortcutIndex)]) { shortcutsMasterData[parseInt(i.dataset.shortcutIndex)][i.dataset.type] = i.value; } });
-                    localStorage.setItem('shortcutsMasterData', JSON.stringify(shortcutsMasterData));
-                    editBtn.innerHTML = `<i class="fas fa-pencil-alt mr-2"></i>แก้ไขรายการ`;
-                    editBtn.style.backgroundColor = 'var(--primary)';
-                    destroySortable();
-                }
-                renderAll(currentDate);
-            }
-            function openIconPicker(index) {
-                currentShortcutIndex = index;
-                iconPickerGrid.innerHTML = '';
-                availableIcons.forEach(iconClass => { const item = document.createElement('div'); item.className = 'icon-picker-item'; item.dataset.iconClass = iconClass; item.innerHTML = `<i class="fas ${iconClass} fa-lg"></i>`; iconPickerGrid.appendChild(item); });
-                iconPickerModal.classList.add('active');
-            }
-            function closeIconPicker() { iconPickerModal.classList.remove('active'); }
-            function showClearModal() { clearModal.classList.add('active'); }
-            function hideClearModal() { clearModal.classList.remove('active'); }
-            function handleClearTasks() { localStorage.removeItem(`dailyTaskProgress-${formatDate(currentDate)}`); hideClearModal(); renderTasks(currentDate); }
-
-            function showDeleteWorkflowModal(id, name) {
-                workflowToDeleteId = id;
-                workflowToDeleteNameSpan.textContent = `'${name}'`;
-                deleteWorkflowModal.classList.add('active');
-            }
-            function hideDeleteWorkflowModal() {
-                deleteWorkflowModal.classList.remove('active');
-                workflowToDeleteId = null;
-            }
-            function handleConfirmDeleteWorkflow() {
-                if (workflowToDeleteId !== null) {
-                    tasksMasterData = tasksMasterData.filter(w => w.id !== workflowToDeleteId);
-                    hideDeleteWorkflowModal();
-                    renderTasks(currentDate);
-                }
-            }
-
-            function handleSaveToHtml() {
-                if (isEditMode) {
-                    showNotification('ไม่สามารถบันทึกได้', 'กรุณาออกจากโหมดแก้ไขก่อนทำการบันทึก', 'info');
-                    return;
-                }
-                const dateStr = formatDate(currentDate);
-                const filename = `daily-workflow-${dateStr}.html`;
-                const gridClone = taskGrid.cloneNode(true);
-                const originalCheckboxes = taskGrid.querySelectorAll('input[type="checkbox"]');
-                const clonedCheckboxes = gridClone.querySelectorAll('input[type="checkbox"]');
-                originalCheckboxes.forEach((cb, index) => {
-                    if (cb.checked) { clonedCheckboxes[index].setAttribute('checked', 'checked'); }
-                });
-                const styles = document.querySelector('style').innerHTML;
-                const headerContent = document.querySelector('#workspace-workflows > header').outerHTML;
-                const gridContent = gridClone.outerHTML;
-                const htmlContent = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Daily Workflow - ${dateStr}</title><script src="https://cdn.tailwindcss.com"><\/script><style>${styles} body{padding:2rem;} .task-link-btn, input[type="checkbox"]{pointer-events:none;} .task-link-btn{color:#1f2937;} header{position:static!important;}</style></head><body class="bg-blue-50"><div class="container mx-auto max-w-7xl">${headerContent}${gridContent}</div></body></html>`;
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
-            }
-
-            function handleExportTemplate() {
-                const dataStr = JSON.stringify(tasksMasterData, null, 2);
-                const blob = new Blob([dataStr], { type: "application/json" });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'workflow-template.json';
-                a.click();
-                URL.revokeObjectURL(a.href);
-            }
-
-            function handleImportTemplate(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const importedData = JSON.parse(e.target.result);
-                        if (Array.isArray(importedData)) {
-                            tasksMasterData = importedData;
-                            localStorage.setItem('tasksMasterData', JSON.stringify(tasksMasterData));
-                            renderAll(currentDate);
-                            showNotification('สำเร็จ', 'นำเข้าเทมเพลตเรียบร้อยแล้ว', 'success');
-                        } else { throw new Error('Invalid format.'); }
-                    } catch (error) {
-                        showNotification('เกิดข้อผิดพลาด', 'ไฟล์เทมเพลตไม่ถูกต้อง', 'error');
-                    } finally {
-                        importFileInput.value = '';
-                    }
-                };
-                reader.readAsText(file);
-            }
-            
-            async function handleRunMacro(workflowId) {
-                const workflow = tasksMasterData.find(w => w.id === parseInt(workflowId));
-                if (!workflow) return;
-                const tasksToRun = workflow.tasks.filter(t => t.link && t.link !== '#');
-                if (tasksToRun.length === 0) {
-                    showNotification('Macro', 'ไม่มีลิงก์ให้เปิดใน Workflow นี้', 'info');
-                    return;
-                }
-                showNotification('Macro', `กำลังเปิด ${tasksToRun.length} tasks...`, 'info');
-                for (const task of tasksToRun) {
-                    await window.electronAPI.openFile(task.link);
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                }
-            }
-
-            sidebarToggleBtn.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-            
-            document.addEventListener('click', async function(e) {
-                if (e.target.closest('#add-shortcut-btn')) { shortcutsMasterData.push({ id: Date.now(), name: 'New Shortcut', link: '', icon: 'fa-link' }); renderShortcuts(); }
-                if (e.target.closest('#add-workflow-btn')) {
-                    const newId = tasksMasterData.length > 0 ? Math.max(...tasksMasterData.map(w => w.id)) + 1 : 1;
-                    tasksMasterData.push({ id: newId, title: 'New Workflow', tasks: [] });
-                    renderTasks(currentDate);
-                }
-                if (e.target.closest('.remove-shortcut-btn')) { const i = e.target.closest('.remove-shortcut-btn').dataset.shortcutIndex; shortcutsMasterData.splice(i, 1); renderShortcuts(); }
-                if (e.target.closest('.change-icon-btn')) { openIconPicker(e.target.closest('.change-icon-btn').dataset.shortcutIndex); }
-                if (e.target.closest('.icon-picker-item')) { const icon = e.target.closest('.icon-picker-item').dataset.iconClass; if (currentShortcutIndex !== null) { shortcutsMasterData[currentShortcutIndex].icon = icon; renderShortcuts(); closeIconPicker(); } }
-                if (e.target.closest('.add-task-btn')) { const wf = tasksMasterData.find(w => w.id === parseInt(e.target.closest('.task-card').dataset.workflowId)); if(wf) { wf.tasks.push({ name: 'New Task', link: '' }); renderTasks(currentDate); } }
-                if (e.target.closest('.remove-task-btn')) { const btn = e.target.closest('.remove-task-btn'); const wf = tasksMasterData.find(w => w.id === parseInt(btn.dataset.workflowId)); if(wf) { wf.tasks.splice(parseInt(btn.dataset.taskIndex), 1); renderTasks(currentDate); } }
-                if (e.target.closest('.task-link-btn')) { const link = e.target.closest('.task-link-btn').dataset.link; if (link && link !== '#') { const r = await window.electronAPI.openFile(link); if (!r.success) { showNotification('เกิดข้อผิดพลาด', `ไม่สามารถเปิด Task link ได้: ${r.error}`); } } }
-                if (e.target.closest('.run-macro-btn')) { handleRunMacro(e.target.closest('.run-macro-btn').dataset.workflowId); }
-                if (e.target.closest('.delete-workflow-btn')) {
-                    const workflowId = parseInt(e.target.closest('.delete-workflow-btn').dataset.workflowId);
-                    const workflow = tasksMasterData.find(w => w.id === workflowId);
-                    if (workflow) showDeleteWorkflowModal(workflow.id, workflow.title);
-                }
+                container.appendChild(btn);
             });
-            
-            searchInput.addEventListener('input', () => { renderTasks(currentDate); updateProgress(); });
-            datePicker.addEventListener('change', (e) => { const [y, m, d] = e.target.value.split('-').map(Number); renderAll(new Date(y, m - 1, d)); });
-            todayBtn.addEventListener('click', () => { const today = new Date(); datePicker.value = formatDate(today); renderAll(today); });
-            editBtn.addEventListener('click', handleEditToggle);
-            saveHtmlBtn.addEventListener('click', handleSaveToHtml);
-            clearBtn.addEventListener('click', showClearModal);
-            cancelClearBtn.addEventListener('click', hideClearModal);
-            confirmClearBtn.addEventListener('click', handleClearTasks);
-            closeIconPickerBtn.addEventListener('click', closeIconPicker);
-            exportTemplateBtn.addEventListener('click', handleExportTemplate);
-            importTemplateBtn.addEventListener('click', () => importFileInput.click());
-            importFileInput.addEventListener('change', handleImportTemplate);
-            cancelDeleteWorkflowBtn.addEventListener('click', hideDeleteWorkflowModal);
-            confirmDeleteWorkflowBtn.addEventListener('click', handleConfirmDeleteWorkflow);
+        }
 
-            function initialize() {
-                loadMasterData();
-                const today = new Date();
-                datePicker.value = formatDate(today);
-                renderAll(today);
+        function renderTasks() {
+            const grid = document.getElementById('task-grid');
+            grid.innerHTML = '';
+
+            appState.masterData.forEach((wf, wfIdx) => {
+                const card = document.createElement('div');
+                card.className = 'task-card flex flex-col h-full animate-fade-in p-5';
+                card.style.animationDelay = `${wfIdx * 0.05}s`;
+
+                let header = '';
+                if(appState.isEditMode) {
+                    header = `
+                        <div class="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                            <i class="fa-solid fa-grip-vertical text-gray-300 cursor-move handle hover:text-indigo-500"></i>
+                            <input type="text" value="${wf.title}" class="font-bold text-gray-700 bg-transparent focus:outline-none w-full border-b border-transparent focus:border-indigo-500 transition-all" onchange="updateWorkflowTitle(${wfIdx}, this.value)">
+                            <button onclick="deleteWorkflow(${wfIdx})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                } else {
+                    const completedCount = wf.tasks.filter((_, tIdx) => appState.progress[`${wfIdx}_${tIdx}`]).length;
+                    const total = wf.tasks.length;
+                    const percent = total === 0 ? 0 : Math.round((completedCount/total)*100);
+                    
+                    header = `
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-bold text-lg text-slate-800 line-clamp-1 border-l-4 border-indigo-500 pl-3" title="${wf.title}">${wf.title}</h3>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-full ${percent === 100 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}">${percent}%</span>
+                        </div>
+                    `;
+                }
+
+                let taskList = `<div class="space-y-2 flex-grow sortable-tasks" data-wf="${wfIdx}">`;
+                wf.tasks.forEach((task, tIdx) => {
+                    if(appState.isEditMode) {
+                        taskList += `
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 group/edit shadow-sm">
+                                <div class="flex gap-2 mb-2">
+                                    <div class="flex-grow">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Task Name</label>
+                                        <input type="text" value="${task.name}" class="text-sm w-full bg-white border border-gray-200 rounded p-1 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
+                                    </div>
+                                    <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-gray-300 hover:text-red-500 mt-4"><i class="fa-solid fa-times"></i></button>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase">File Path / URL</label>
+                                    <input type="text" value="${task.link || ''}" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-500 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
+                                </div>
+                                <div class="flex gap-2">
+                                    <div class="w-1/2">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Width (Web Only)</label>
+                                        <input type="number" value="${task.width || ''}" placeholder="e.g. 800" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-500 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'width', this.value)">
+                                    </div>
+                                    <div class="w-1/2">
+                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Height (Web Only)</label>
+                                        <input type="number" value="${task.height || ''}" placeholder="e.g. 600" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-500 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'height', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        const isDone = appState.progress[`${wfIdx}_${tIdx}`];
+                        const linkBtn = task.link ? `<button onclick="openLink('${task.link.replace(/\\/g, '\\\\')}', ${task.width}, ${task.height})" class="text-indigo-400 hover:text-indigo-600 ml-auto p-1 rounded hover:bg-indigo-50 transition-colors" title="Open Link"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>` : '';
+                        
+                        taskList += `
+                            <div class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer border border-transparent hover:border-gray-100" onclick="toggleTask(${wfIdx}, ${tIdx})">
+                                <div class="relative flex items-center justify-center">
+                                    <input type="checkbox" class="custom-checkbox" ${isDone ? 'checked' : ''}>
+                                </div>
+                                <span class="text-sm text-gray-600 ${isDone ? 'line-through text-gray-400' : ''} select-none flex-grow font-medium">${task.name}</span>
+                                <div onclick="event.stopPropagation()">${linkBtn}</div>
+                            </div>
+                        `;
+                    }
+                });
+                taskList += '</div>';
+
+                let footer = '';
+                if(appState.isEditMode) {
+                    footer = `<button onclick="addTask(${wfIdx})" class="mt-3 w-full py-2 border border-dashed border-indigo-200 text-indigo-500 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition-colors">+ Add Task</button>`;
+                } else if (wf.tasks.some(t => t.link)) {
+                    footer = `
+                        <button onclick="runMacro(${wfIdx})" class="mt-4 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
+                            <i class="fa-solid fa-rocket group-hover/btn:animate-bounce"></i> Launch All Apps
+                        </button>
+                    `;
+                }
+
+                card.innerHTML = header + taskList + footer;
+                grid.appendChild(card);
+            });
+
+            if(appState.isEditMode) {
+                initSortable();
             }
-            initialize();
-        });
-    </script>
+        }
 
+        function updateProgressBar() {
+            let total = 0, done = 0;
+            appState.masterData.forEach((wf, wIdx) => wf.tasks.forEach((_, tIdx) => {
+                total++;
+                if(appState.progress[`${wIdx}_${tIdx}`]) done++;
+            }));
+            const pct = total === 0 ? 0 : (done/total)*100;
+            document.getElementById('overall-progress-bar').style.width = `${pct}%`;
+        }
+
+        function updateEditModeUI() {
+            const btn = document.getElementById('edit-mode-btn');
+            const fab = document.getElementById('add-workflow-fab');
+            const sidebar = document.getElementById('sidebar');
+
+            if(appState.isEditMode) {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> <span class="hidden sm:inline">Done</span>';
+                btn.classList.add('bg-green-500', 'text-white', 'border-transparent');
+                btn.classList.remove('bg-white', 'text-indigo-600', 'border-indigo-100');
+                fab.classList.remove('hidden');
+                fab.classList.add('flex');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit</span>';
+                btn.classList.remove('bg-green-500', 'text-white', 'border-transparent');
+                btn.classList.add('bg-white', 'text-indigo-600', 'border-indigo-100');
+                fab.classList.remove('flex');
+                fab.classList.add('hidden');
+            }
+        }
+
+        function showToast(msg, type='info') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            
+            const icon = document.getElementById('toast-icon');
+            if(type === 'error') icon.className = 'fa-solid fa-circle-exclamation text-red-400';
+            else icon.className = 'fa-solid fa-circle-info text-indigo-400';
+
+            toast.classList.remove('opacity-0', 'translate-y-20');
+            setTimeout(() => toast.classList.add('opacity-0', 'translate-y-20'), 3000);
+        }
+
+        // --- EXPORT & IMPORT FUNCTIONS ---
+        function exportTemplate() {
+            const dataToExport = {
+                exportedAt: new Date().toISOString(),
+                shortcuts: appState.shortcuts,
+                masterData: appState.masterData
+            };
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `planner_template_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Template exported successfully!', 'success');
+        }
+
+        function importTemplate(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // Basic validation
+                    if (data.masterData && Array.isArray(data.masterData)) {
+                        if (confirm('Importing will overwrite current layouts. Continue?')) {
+                            appState.masterData = data.masterData;
+                            if (data.shortcuts) appState.shortcuts = data.shortcuts;
+                            saveData();
+                            renderAll();
+                            showToast('Template loaded successfully!', 'success');
+                        }
+                    } else {
+                        showToast('Invalid JSON template format', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error reading file', 'error');
+                }
+                event.target.value = ''; // Reset
+            };
+            reader.readAsText(file);
+        }
+
+        // --- OPEN FILE LOGIC ---
+        function openLink(path, w, h) {
+            if (path.startsWith('http') && w && h) {
+                // Open Web Link with specific size
+                window.open(path, '_blank', `width=${w},height=${h},left=100,top=100`);
+            } else {
+                // Open Local File or standard link
+                window.electronAPI.openFile(path);
+            }
+        }
+
+        // --- Event Handlers & Actions ---
+
+        function toggleTask(wfIdx, tIdx) {
+            if(appState.isEditMode) return;
+            const key = `${wfIdx}_${tIdx}`;
+            appState.progress[key] = !appState.progress[key];
+            saveProgress();
+            renderTasks();
+        }
+
+        async function runMacro(wfIdx) {
+            const tasks = appState.masterData[wfIdx].tasks.filter(t => t.link);
+            showToast(`🚀 Launching ${tasks.length} apps...`);
+            for(const t of tasks) {
+                openLink(t.link, t.width, t.height);
+                await new Promise(r => setTimeout(r, 800)); // Delay
+            }
+        }
+
+        function toggleEditMode() {
+            appState.isEditMode = !appState.isEditMode;
+            if(!appState.isEditMode) {
+                saveData(); // Save on exit
+                showToast('Layout saved successfully');
+            }
+            updateEditModeUI();
+            renderAll();
+        }
+
+        // Data Manipulation
+        window.updateWorkflowTitle = (idx, val) => { appState.masterData[idx].title = val; };
+        window.updateTask = (wIdx, tIdx, field, val) => { appState.masterData[wIdx].tasks[tIdx][field] = val; };
+        window.addTask = (wIdx) => { appState.masterData[wIdx].tasks.push({name:'', link:''}); renderTasks(); };
+        window.removeTask = (wIdx, tIdx) => { appState.masterData[wIdx].tasks.splice(tIdx, 1); renderTasks(); };
+        window.deleteWorkflow = (idx) => { if(confirm('Delete workflow?')) { appState.masterData.splice(idx, 1); renderTasks(); }};
+        window.updateShortcut = (idx, field, val) => { appState.shortcuts[idx][field] = val; };
+        window.deleteShortcut = (idx) => { appState.shortcuts.splice(idx, 1); renderShortcuts(); };
+
+        function setupEventListeners() {
+            document.getElementById('export-template-btn').onclick = exportTemplate;
+            
+            // Import Button Logic
+            const importBtn = document.getElementById('import-template-btn');
+            const fileInput = document.getElementById('import-file-input');
+            if(importBtn && fileInput) {
+                importBtn.onclick = () => fileInput.click();
+                fileInput.onchange = importTemplate;
+            }
+
+            document.getElementById('save-watch-btn').onclick = () => {
+                appState.watchPath = document.getElementById('watch-path-input').value;
+                saveData();
+                updateWatchList();
+                showToast('Watch folder updated');
+            };
+            document.getElementById('refresh-watch-btn').onclick = () => {
+                updateWatchList();
+                showToast('Scanning folder...');
+            };
+
+            document.getElementById('edit-mode-btn').onclick = toggleEditMode;
+            document.getElementById('add-workflow-fab').onclick = () => {
+                appState.masterData.push({id: Date.now(), title: 'New Plan', tasks: []});
+                renderTasks();
+                setTimeout(() => {
+                    const container = document.getElementById('scroll-container');
+                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                }, 100);
+            };
+            document.getElementById('add-shortcut-btn').onclick = () => {
+                appState.shortcuts.push({name:'New Link', link:''});
+                if(!appState.isEditMode) showToast('Enter Edit Mode to configure link', 'warning');
+                renderShortcuts();
+            };
+            document.getElementById('reset-day-btn').onclick = () => {
+                if(confirm('ต้องการรีเซ็ตข้อมูลของวันนี้ทั้งหมดหรือไม่? (ข้อมูลเดิมจะถูกล้าง)')) {
+                    localStorage.removeItem('taskMasterData');
+                    appState.progress = {};
+                    saveProgress();
+                    location.reload(); 
+                }
+            };
+            document.getElementById('today-btn').onclick = () => {
+                appState.currentDate = new Date();
+                loadProgress();
+                renderAll();
+            };
+            document.getElementById('date-picker').onchange = (e) => {
+                appState.currentDate = new Date(e.target.value);
+                loadProgress();
+                renderAll();
+            };
+        }
+
+        // Drag & Drop
+        function initSortable() {
+            new Sortable(document.getElementById('task-grid'), { handle: '.handle', animation: 150 });
+            document.querySelectorAll('.sortable-tasks').forEach(el => {
+                new Sortable(el, { group: 'tasks', animation: 150, onEnd: () => {
+                }});
+            });
+        }
+
+        function startClock() {
+            // Updated for HH:MM:SS
+            setInterval(() => {
+                document.getElementById('clock-display').innerText = new Date().toLocaleTimeString('th-TH', {
+                    hour:'2-digit', 
+                    minute:'2-digit', 
+                    second:'2-digit'
+                });
+            }, 1000);
+        }
+
+        init();
+    </script>
 </body>
 </html>
-
