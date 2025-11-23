@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner Want to Go Home V.1.3</title>
+    <title>Planner Want to Go Home V.1.6</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -18,13 +18,9 @@
                     fontFamily: { sans: ['Sarabun', 'sans-serif'] },
                     colors: {
                         brand: {
-                            start: '#4F46E5', // Indigo-600
-                            end: '#9333EA',   // Purple-600
-                            light: '#EEF2FF'
+                            start: '#4F46E5',
+                            end: '#9333EA',
                         }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -34,119 +30,102 @@
     <style>
         body { background-color: #F3F4F6; font-family: 'Sarabun', sans-serif; overflow: hidden; }
         
-        /* Modern Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
-        /* Sidebar Gradient */
         .sidebar-gradient {
             background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%);
         }
 
-        /* Glassmorphism Card */
         .task-card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            position: relative;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s ease-in-out;
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            break-inside: avoid;
+            margin-bottom: 1rem;
             overflow: hidden;
         }
         .task-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            border-color: #A78BFA;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
         }
-        .task-card::before {
-            content: ''; position: absolute; top: 0; left: 0; w: 100%; h: 4px;
-            background: linear-gradient(90deg, #4F46E5, #9333EA);
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .task-card:hover::before { opacity: 1; }
 
-        /* Checkbox Styling */
+        /* Custom Checkbox */
         .custom-checkbox {
             appearance: none;
-            width: 1.25rem; height: 1.25rem;
-            border: 2px solid #CBD5E1; border-radius: 6px;
+            width: 1.1rem; height: 1.1rem;
+            border: 1.5px solid #CBD5E1; border-radius: 4px;
             display: inline-flex; align-items: center; justify-content: center;
-            transition: all 0.2s; cursor: pointer;
+            transition: all 0.1s; cursor: pointer;
+            flex-shrink: 0;
+            background-color: white;
         }
         .custom-checkbox:checked {
-            background-color: #7C3AED; border-color: #7C3AED;
+            background-color: #10B981; border-color: #10B981; /* Green for success */
         }
         .custom-checkbox:checked::after {
             content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
-            color: white; font-size: 0.75rem;
+            color: white; font-size: 0.7rem;
         }
 
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .masonry-grid { column-count: 1; column-gap: 1rem; }
+        @media (min-width: 768px) { .masonry-grid { column-count: 2; } }
+        @media (min-width: 1280px) { .masonry-grid { column-count: 3; } }
+        @media (min-width: 1536px) { .masonry-grid { column-count: 4; } }
+
+        /* Sidebar Collapse Logic */
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar.collapsed { width: 4rem; }
+        #sidebar.collapsed .sidebar-text { opacity: 0; width: 0; display: none; }
+        #sidebar.collapsed .sidebar-icon-only { justify-content: center; }
+        #sidebar.collapsed .sidebar-padding { padding-left: 0.5rem; padding-right: 0.5rem; }
         
-        /* Watch List Active State */
-        .watching-active {
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-            border-color: #6366F1;
-        }
-        
-        /* Edit Mode Input Highlight */
-        .edit-input {
-            border-bottom: 2px solid #E2E8F0;
-            transition: border-color 0.2s;
-        }
-        .edit-input:focus {
-            border-color: #6366F1;
-            outline: none;
-        }
+        /* Card Header Colors */
+        .card-header-color { height: 6px; width: 100%; }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex">
 
-    <!-- Sidebar (Fixed Width 64 = 16rem) -->
-    <aside id="sidebar" class="w-64 sidebar-gradient flex flex-col shadow-2xl z-20 flex-shrink-0">
-        <div class="p-6 flex items-center gap-4 text-white">
-            <div class="min-w-[2.5rem] h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold shadow-inner">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 sidebar-gradient flex flex-col shadow-2xl z-20 flex-shrink-0 relative">
+        <!-- Toggle Button -->
+        <button id="sidebar-toggle" class="absolute -right-3 top-6 bg-white text-indigo-600 rounded-full w-6 h-6 shadow-md flex items-center justify-center hover:scale-110 transition-transform z-50 border border-indigo-100">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+
+        <div class="p-5 flex items-center gap-3 text-white sidebar-icon-only overflow-hidden">
+            <div class="min-w-[2rem] h-8 rounded-lg bg-white/20 backdrop-blur flex items-center justify-center text-lg font-bold shadow-inner flex-shrink-0">
                 <i class="fa-solid fa-house-person-return"></i>
             </div>
-            <h1 class="font-bold text-lg whitespace-nowrap">Planner Home</h1>
+            <h1 class="font-bold text-base whitespace-nowrap tracking-wide sidebar-text">Planner Home</h1>
         </div>
 
-        <div class="flex-grow py-4 px-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
-            <div class="text-xs font-semibold text-indigo-200 uppercase tracking-wider mb-3 px-1">Shortcuts</div>
-            <div id="shortcuts-container" class="space-y-2">
-                <!-- Shortcuts Injected Here -->
-            </div>
+        <div class="flex-grow py-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar sidebar-padding">
+            <div class="text-[10px] font-bold text-indigo-200 uppercase tracking-wider mb-2 px-1 sidebar-text">Shortcuts</div>
+            <div id="shortcuts-container" class="space-y-1"></div>
             
-            <button id="add-shortcut-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-indigo-100 border border-white/10 hover:bg-white/10 transition-colors mt-2 group">
-                <i class="fa-solid fa-plus group-hover:scale-110 transition-transform"></i>
-                <span class="text-sm font-medium">Add Shortcut</span>
+            <button id="add-shortcut-btn" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-100 border border-white/10 hover:bg-white/10 transition-colors mt-2 group sidebar-icon-only">
+                <i class="fa-solid fa-plus text-xs group-hover:scale-110 transition-transform flex-shrink-0"></i>
+                <span class="text-xs font-medium sidebar-text">Add Shortcut</span>
             </button>
         </div>
 
-        <div class="p-4 border-t border-white/10 bg-black/10 space-y-2">
-            <!-- Import/Export Group -->
-            <div class="flex gap-2">
-                <!-- Import Button (New) -->
-                <button id="import-template-btn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20" title="Import JSON">
-                    <i class="fa-solid fa-file-import"></i>
-                    <span class="text-sm">Import</span>
+        <div class="p-3 border-t border-white/10 bg-black/10 space-y-2 sidebar-padding">
+            <div class="flex gap-2 sidebar-text">
+                <button id="import-template-btn" class="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-indigo-100 hover:text-white hover:bg-white/10 rounded-md transition-all border border-transparent hover:border-white/20" title="Import JSON">
+                    <i class="fa-solid fa-file-import text-xs"></i> <span class="text-xs">Import</span>
                 </button>
-                
-                <!-- Export Button -->
-                <button id="export-template-btn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20" title="Export JSON">
-                    <i class="fa-solid fa-file-export"></i>
-                    <span class="text-sm">Export</span>
+                <button id="export-template-btn" class="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-indigo-100 hover:text-white hover:bg-white/10 rounded-md transition-all border border-transparent hover:border-white/20" title="Export JSON">
+                    <i class="fa-solid fa-file-export text-xs"></i> <span class="text-xs">Export</span>
                 </button>
             </div>
-            
-            <!-- Reset Button -->
-            <button id="reset-day-btn" class="w-full flex items-center gap-3 px-3 py-2 text-red-200 hover:text-white hover:bg-red-500/20 rounded-lg transition-all" title="Factory Reset">
-                <i class="fa-solid fa-power-off w-5 text-center"></i>
-                <span class="text-sm">Reset Data</span>
+            <button id="reset-day-btn" class="w-full flex items-center gap-2 px-2 py-1.5 text-red-200 hover:text-white hover:bg-red-500/20 rounded-md transition-all sidebar-icon-only" title="Factory Reset">
+                <i class="fa-solid fa-power-off w-4 text-center text-xs flex-shrink-0"></i>
+                <span class="text-xs sidebar-text">Reset Data</span>
             </button>
         </div>
     </aside>
@@ -155,111 +134,93 @@
     <main class="flex-grow flex flex-col h-screen overflow-hidden bg-[#F3F4F6] relative">
         
         <!-- Header -->
-        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 z-10 sticky top-0 shadow-sm">
-            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                        Planner Want to Go Home <span class="text-sm font-light text-gray-400">V.1.3</span>
-                    </h2>
-                    <div class="flex items-center gap-3 mt-1">
-                        <span id="current-date-display" class="text-sm font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md">Today</span>
-                        <span id="clock-display" class="text-sm font-bold text-indigo-600 w-24 inline-block text-center font-mono bg-indigo-50 rounded px-2">--:--:--</span>
+        <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 z-10 sticky top-0 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                
+                <!-- Left: Title & Clock -->
+                <div class="flex items-center gap-4 w-full md:w-auto">
+                    <div>
+                        <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                            Planner V.1.6
+                        </h2>
+                        <span id="clock-display" class="text-xs font-bold text-gray-400 font-mono">--:--:--</span>
+                    </div>
+                    <div class="h-8 w-px bg-gray-200 hidden md:block"></div>
+                    <!-- Progress Stats -->
+                    <div class="flex flex-col">
+                        <div class="flex items-end gap-2">
+                            <span id="progress-percent" class="text-2xl font-bold text-indigo-600 leading-none">0%</span>
+                            <span id="progress-count" class="text-xs font-medium text-gray-500 mb-1">0/0 Tasks</span>
+                        </div>
+                        <div class="w-32 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                            <div id="overall-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right Controls -->
-                <div class="flex gap-4 items-start w-full xl:w-auto justify-end">
-                    
-                     <!-- WATCH LIST WIDGET -->
-                    <div class="relative group/watch z-50">
-                        <div id="watch-status-indicator" class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer">
-                            <div class="relative">
-                                <div class="w-2 h-2 rounded-full bg-gray-300" id="watch-dot"></div>
-                                <div class="w-2 h-2 rounded-full bg-gray-300 absolute top-0 left-0 animate-ping opacity-0" id="watch-ping"></div>
-                            </div>
-                            <div class="flex flex-col leading-none">
-                                <span class="text-[10px] font-bold text-gray-400">WATCH LIST</span>
-                                <span class="text-xs font-semibold text-gray-700" id="watch-status-text">Inactive</span>
-                            </div>
-                            <i class="fa-solid fa-chevron-down text-gray-400 text-xs ml-1 transition-transform group-hover/watch:rotate-180"></i>
-                        </div>
-                        
-                        <!-- Watch List Dropdown -->
-                        <div class="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 hidden group-hover/watch:block hover:block animate-fade-in">
-                            <div class="mb-3">
-                                <label class="text-[10px] font-bold text-indigo-500 block mb-1 uppercase">Monitor Folder Path</label>
-                                <div class="flex gap-2">
-                                    <input type="text" id="watch-path-input" class="w-full text-xs border rounded p-1.5 bg-gray-50 focus:ring-1 focus:ring-indigo-500 outline-none" placeholder="Paste folder path here...">
-                                    <button id="save-watch-btn" class="text-xs bg-indigo-600 text-white px-2.5 rounded hover:bg-indigo-700 transition-colors"><i class="fa-solid fa-save"></i></button>
-                                </div>
-                                <p class="text-[10px] text-gray-400 mt-1">*Auto-scans every 5 mins</p>
-                            </div>
-                            <div class="border-t border-gray-100 pt-2">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-[10px] font-bold text-gray-500">LATEST 5 FILES</span>
-                                    <button id="refresh-watch-btn" class="text-indigo-500 hover:text-indigo-700 p-1" title="Scan Now"><i class="fa-solid fa-rotate"></i></button>
-                                </div>
-                                <div id="watch-list-items" class="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-                                    <div class="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No folder configured</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Date & Edit Controls -->
-                    <div class="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
-                        <input type="date" id="date-picker" class="border-none text-sm text-gray-600 focus:ring-0 cursor-pointer w-32">
-                        <button id="today-btn" class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center font-bold text-xs" title="Go to Today">T</button>
-                    </div>
-
-                    <button id="edit-mode-btn" class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl shadow-sm transition-all text-sm font-semibold flex items-center gap-2">
+                <!-- Right: Controls & Date -->
+                <div class="flex items-center gap-3 ml-auto">
+                    <button id="edit-mode-btn" class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg shadow-sm transition-all text-xs font-semibold flex items-center gap-2 h-9">
                         <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit</span>
                     </button>
-                </div>
-            </div>
 
-            <!-- Progress Bar -->
-            <div class="mt-4 relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div id="overall-progress-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(79,70,229,0.5)]" style="width: 0%"></div>
+                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
+
+                    <!-- Date Picker Group (Right Aligned) -->
+                    <div class="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-200 h-9">
+                        <button id="today-btn" class="px-3 py-1 rounded bg-white text-indigo-600 shadow-sm font-bold text-xs hover:text-indigo-800 transition-colors mr-2">Today</button>
+                        <input type="date" id="date-picker" class="bg-transparent border-none text-xs text-gray-600 focus:ring-0 cursor-pointer font-medium">
+                        <div class="px-2 text-gray-400"><i class="fa-regular fa-calendar"></i></div>
+                    </div>
+                </div>
             </div>
         </header>
 
         <!-- Content Area -->
-        <div id="scroll-container" class="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar">
-            <div id="task-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20">
-                <!-- Cards will be injected here -->
+        <div id="scroll-container" class="flex-grow overflow-y-auto p-4 custom-scrollbar">
+            <div id="task-grid" class="masonry-grid pb-20">
+                <!-- Cards injected here -->
             </div>
         </div>
 
-        <!-- Add Workflow FAB -->
+        <!-- FAB -->
         <button id="add-workflow-fab" class="hidden fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-lg shadow-indigo-300 hover:scale-110 hover:shadow-xl transition-all items-center justify-center text-2xl z-30">
             <i class="fa-solid fa-plus"></i>
         </button>
 
-        <!-- Notification Toast -->
+        <!-- Toast -->
         <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
-            <div class="bg-gray-800/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700">
+            <div class="bg-gray-800/90 backdrop-blur text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-gray-700">
                 <i id="toast-icon" class="fa-solid fa-info-circle text-indigo-400"></i>
-                <span id="toast-message" class="text-sm font-medium">Notification</span>
+                <span id="toast-message" class="text-xs font-medium">Notification</span>
             </div>
         </div>
 
     </main>
 
-    <!-- Import Hidden Input -->
     <input type="file" id="import-file-input" class="hidden" accept=".json">
 
     <script>
-        // --- Core Application Logic ---
+        const ICONS = [
+            { id: 'fa-bolt', label: 'ด่วน' }, { id: 'fa-star', label: 'สำคัญ' }, { id: 'fa-file-excel', label: 'Excel' },
+            { id: 'fa-globe', label: 'เว็บ' }, { id: 'fa-envelope', label: 'เมล' }, { id: 'fa-calendar', label: 'แผน' },
+            { id: 'fa-truck-fast', label: 'รถ' }, { id: 'fa-industry', label: 'ผลิต' }
+        ];
+        
+        // Vivid Colors for Topics
+        const CARD_COLORS = [
+            '#EF4444', // Red
+            '#F59E0B', // Amber
+            '#10B981', // Emerald
+            '#3B82F6', // Blue
+            '#8B5CF6', // Violet
+            '#EC4899', // Pink
+            '#06B6D4', // Cyan
+            '#F97316'  // Orange
+        ];
 
         if (typeof window.electronAPI === 'undefined') {
-            window.electronAPI = {
-                openFile: async (path) => { console.log(`[Sim] Open: ${path}`); return { success: true }; },
-                scanFolder: async (path) => { 
-                    console.log(`[Sim] Scan: ${path}`); 
-                    return { success: true, files: [{name: 'SIM_Report_2025.xlsx', path: '#'}, {name: 'URGENT_PLAN.pdf', path: '#'}] }; 
-                }
-            };
+            window.electronAPI = { openFile: async (path) => { console.log(`[Sim] Open: ${path}`); return { success: true }; } };
         }
 
         const appState = {
@@ -268,94 +229,34 @@
             masterData: [],
             shortcuts: [],
             progress: {},
-            watchPath: ''
+            collapsedCards: {},
+            sidebarCollapsed: false
         };
 
-        // --- DEFAULT DATA ---
-        const DEFAULT_DATA = [
-            { "id": 1, "title": "เตรียมโปรแกรมก่อนทำงาน", "tasks": [ { "name": "Login Citrix", "link": "microsoft-edge:http://172.16.10.80/Citrix/XenApp/auth/login.aspx" }, { "name": "เปิด Power Bi", "link": "D:\\Project\\0.Power Bi\\Planning\\Digital Management_PLP Version 2025 Rev.0.2.pbix" } ] }
-        ];
+        const DEFAULT_DATA = [ { "id": 1, "title": "Start Day", "tasks": [{ "name": "Login", "link": "" }] } ];
 
-        // --- Watch List Logic ---
-        async function updateWatchList() {
-            const listContainer = document.getElementById('watch-list-items');
-            const indicator = document.getElementById('watch-dot');
-            const ping = document.getElementById('watch-ping');
-            const statusText = document.getElementById('watch-status-text');
-            const wrapper = document.getElementById('watch-status-indicator');
-
-            if (!appState.watchPath) {
-                listContainer.innerHTML = '<div class="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">No folder configured</div>';
-                indicator.className = 'w-2 h-2 rounded-full bg-gray-300';
-                ping.className = 'hidden';
-                statusText.innerText = 'Inactive';
-                wrapper.classList.remove('watching-active');
-                return;
-            }
-
-            indicator.className = 'w-2 h-2 rounded-full bg-yellow-400';
-            statusText.innerText = 'Scanning...';
-            
-            const result = await window.electronAPI.scanFolder(appState.watchPath);
-            listContainer.innerHTML = '';
-            
-            if (result.success && result.files && result.files.length > 0) {
-                indicator.className = 'w-2 h-2 rounded-full bg-green-500';
-                ping.className = 'w-2 h-2 rounded-full bg-green-500 absolute top-0 left-0 animate-ping opacity-75';
-                statusText.innerText = 'Active';
-                wrapper.classList.add('watching-active');
-                
-                result.files.forEach(file => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between p-2.5 bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-100/50 rounded-lg cursor-pointer transition-all group mb-1';
-                    div.onclick = () => window.electronAPI.openFile(file.path);
-                    div.innerHTML = `
-                        <div class="flex items-center gap-2.5 overflow-hidden">
-                            <div class="w-8 h-8 rounded bg-white flex items-center justify-center text-indigo-500 shadow-sm border border-indigo-50">
-                                <i class="fa-solid fa-file-lines text-xs"></i>
-                            </div>
-                            <div class="flex flex-col overflow-hidden">
-                                <span class="text-xs text-indigo-900 truncate font-semibold">${file.name}</span>
-                                <span class="text-[10px] text-gray-500 truncate">Click to open</span>
-                            </div>
-                        </div>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-indigo-300 group-hover:text-indigo-600 transition-colors"></i>
-                    `;
-                    listContainer.appendChild(div);
-                });
-            } else {
-                indicator.className = 'w-2 h-2 rounded-full bg-gray-400';
-                ping.className = 'hidden';
-                statusText.innerText = 'No Files';
-                wrapper.classList.remove('watching-active');
-                listContainer.innerHTML = `<div class="text-xs text-gray-500 text-center py-4 bg-gray-50 rounded-lg">${result.error || 'No recent files found'}</div>`;
-            }
-        }
-
-        // --- Initialization ---
         function init() {
             loadData();
             setupEventListeners();
             renderAll();
             startClock();
-            if(appState.watchPath) updateWatchList();
-            setInterval(() => { if(appState.watchPath) updateWatchList(); }, 300000); 
         }
 
         function loadData() {
-            const savedPath = localStorage.getItem('watchFolderPath');
-            appState.watchPath = savedPath || '';
-            document.getElementById('watch-path-input').value = appState.watchPath;
-
             const savedData = localStorage.getItem('taskMasterData');
-            if (savedData) {
-                appState.masterData = JSON.parse(savedData);
-            } else {
-                appState.masterData = DEFAULT_DATA;
-            }
-            
+            appState.masterData = savedData ? JSON.parse(savedData) : DEFAULT_DATA;
             const savedShortcuts = localStorage.getItem('shortcutData');
             appState.shortcuts = savedShortcuts ? JSON.parse(savedShortcuts) : [];
+            const savedCollapsed = localStorage.getItem('collapsedCards');
+            appState.collapsedCards = savedCollapsed ? JSON.parse(savedCollapsed) : {};
+            
+            // Load Sidebar State
+            const sbState = localStorage.getItem('sidebarCollapsed');
+            if(sbState === 'true') {
+                appState.sidebarCollapsed = true;
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.querySelector('#sidebar-toggle i').classList.replace('fa-chevron-left', 'fa-chevron-right');
+            }
 
             loadProgress();
         }
@@ -368,7 +269,8 @@
         function saveData() {
             localStorage.setItem('taskMasterData', JSON.stringify(appState.masterData));
             localStorage.setItem('shortcutData', JSON.stringify(appState.shortcuts));
-            localStorage.setItem('watchFolderPath', appState.watchPath);
+            localStorage.setItem('collapsedCards', JSON.stringify(appState.collapsedCards));
+            localStorage.setItem('sidebarCollapsed', appState.sidebarCollapsed);
         }
 
         function saveProgress() {
@@ -377,19 +279,12 @@
             updateProgressBar();
         }
 
-        // --- Rendering ---
         function renderAll() {
-            renderDate();
+            document.getElementById('date-picker').value = appState.currentDate.toISOString().split('T')[0];
             renderShortcuts();
             renderTasks();
             updateProgressBar();
             updateEditModeUI();
-        }
-
-        function renderDate() {
-            const options = { weekday: 'short', day: 'numeric', month: 'short' };
-            document.getElementById('current-date-display').innerText = appState.currentDate.toLocaleDateString('en-US', options); 
-            document.getElementById('date-picker').value = appState.currentDate.toISOString().split('T')[0];
         }
 
         function renderShortcuts() {
@@ -397,28 +292,25 @@
             container.innerHTML = '';
             appState.shortcuts.forEach((sc, idx) => {
                 const btn = document.createElement('div');
+                const iconClass = sc.icon || 'fa-bolt';
                 
                 if(appState.isEditMode) {
-                    btn.className = 'flex flex-col gap-1 p-3 bg-white/10 rounded-lg border border-white/20 mb-3';
+                    let iconOptions = ICONS.map(i => `<option value="${i.id}" ${iconClass === i.id ? 'selected' : ''}>${i.label}</option>`).join('');
+                    btn.className = 'flex flex-col gap-1.5 p-2 bg-white/10 rounded-lg border border-white/20 mb-2 sidebar-icon-only';
                     btn.innerHTML = `
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[10px] font-bold text-indigo-200 uppercase">Shortcut Name</label>
-                            <input type="text" value="${sc.name}" class="text-xs bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none focus:border-white/50" onchange="updateShortcut(${idx}, 'name', this.value)">
+                        <div class="flex gap-2">
+                             <select class="text-[10px] w-8 bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'icon', this.value)">${iconOptions}</select>
+                             <input type="text" value="${sc.name}" class="w-full text-[10px] bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'name', this.value)">
                         </div>
-                        <div class="flex flex-col gap-1 mt-1">
-                            <label class="text-[10px] font-bold text-indigo-200 uppercase">File Path / URL</label>
-                            <input type="text" value="${sc.link}" class="text-[10px] bg-black/20 text-indigo-100 rounded p-1 border border-white/10 focus:outline-none focus:border-white/50" onchange="updateShortcut(${idx}, 'link', this.value)">
-                        </div>
-                        <button onclick="deleteShortcut(${idx})" class="text-[10px] text-red-300 hover:text-red-100 bg-red-500/20 py-1 rounded mt-1">Delete</button>
+                        <input type="text" value="${sc.link}" class="w-full text-[9px] bg-black/20 text-indigo-100 rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'link', this.value)">
+                        <button onclick="deleteShortcut(${idx})" class="text-[9px] text-red-300 bg-red-500/20 py-0.5 rounded w-full">Del</button>
                     `;
                 } else {
-                    btn.className = 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-indigo-50 hover:bg-white/10 hover:text-white transition-all cursor-pointer group/item border border-transparent hover:border-white/10';
+                    btn.className = 'flex items-center gap-3 px-3 py-2 rounded-lg text-indigo-50 hover:bg-white/10 hover:text-white transition-all cursor-pointer group/item border border-transparent hover:border-white/10 sidebar-icon-only';
                     btn.onclick = () => window.electronAPI.openFile(sc.link);
                     btn.innerHTML = `
-                        <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center group-hover/item:bg-white/20 transition-colors">
-                            <i class="fa-solid fa-bolt text-sm text-yellow-300"></i>
-                        </div>
-                        <span class="whitespace-nowrap text-sm font-medium">${sc.name}</span>
+                        <div class="w-6 h-6 flex items-center justify-center flex-shrink-0"><i class="fa-solid ${iconClass} text-xs text-yellow-300"></i></div>
+                        <span class="whitespace-nowrap text-xs font-medium truncate sidebar-text">${sc.name}</span>
                     `;
                 }
                 container.appendChild(btn);
@@ -430,70 +322,74 @@
             grid.innerHTML = '';
 
             appState.masterData.forEach((wf, wfIdx) => {
+                const isCollapsed = appState.collapsedCards[wfIdx];
+                const color = CARD_COLORS[wfIdx % CARD_COLORS.length]; // Cycle colors
+                
                 const card = document.createElement('div');
-                card.className = 'task-card flex flex-col h-full animate-fade-in p-5';
-                card.style.animationDelay = `${wfIdx * 0.05}s`;
-
+                card.className = 'task-card flex flex-col animate-fade-in';
+                
                 let header = '';
+                const completedCount = wf.tasks.filter((_, tIdx) => appState.progress[`${wfIdx}_${tIdx}`]).length;
+                const total = wf.tasks.length;
+                const percent = total === 0 ? 0 : Math.round((completedCount/total)*100);
+
+                // Topic Color Bar
+                const colorBar = `<div class="card-header-color" style="background-color: ${color};"></div>`;
+
                 if(appState.isEditMode) {
                     header = `
-                        <div class="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
-                            <i class="fa-solid fa-grip-vertical text-gray-300 cursor-move handle hover:text-indigo-500"></i>
-                            <input type="text" value="${wf.title}" class="font-bold text-gray-700 bg-transparent focus:outline-none w-full border-b border-transparent focus:border-indigo-500 transition-all" onchange="updateWorkflowTitle(${wfIdx}, this.value)">
-                            <button onclick="deleteWorkflow(${wfIdx})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash"></i></button>
+                        <div class="p-3 pb-1">
+                            <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-1">
+                                <i class="fa-solid fa-grip-vertical text-gray-300 cursor-move handle text-xs"></i>
+                                <input type="text" value="${wf.title}" class="font-bold text-sm text-gray-700 bg-transparent focus:outline-none w-full" onchange="updateWorkflowTitle(${wfIdx}, this.value)">
+                                <button onclick="deleteWorkflow(${wfIdx})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
                         </div>
                     `;
                 } else {
-                    const completedCount = wf.tasks.filter((_, tIdx) => appState.progress[`${wfIdx}_${tIdx}`]).length;
-                    const total = wf.tasks.length;
-                    const percent = total === 0 ? 0 : Math.round((completedCount/total)*100);
-                    
+                    const chevron = isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up';
                     header = `
-                        <div class="flex justify-between items-start mb-4">
-                            <h3 class="font-bold text-lg text-slate-800 line-clamp-1 border-l-4 border-indigo-500 pl-3" title="${wf.title}">${wf.title}</h3>
-                            <span class="text-[10px] font-bold px-2 py-1 rounded-full ${percent === 100 ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'}">${percent}%</span>
+                        <div class="p-3 pb-2 cursor-pointer" onclick="toggleCollapse(${wfIdx})">
+                            <div class="flex justify-between items-center mb-1">
+                                <h3 class="font-bold text-sm text-slate-800 line-clamp-1" style="color: ${color}">${wf.title}</h3>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-gray-400">${completedCount}/${total}</span>
+                                    <i class="fa-solid ${chevron} text-gray-300 text-[10px]"></i>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+                                 <div class="h-1 rounded-full transition-all duration-300" style="width: ${percent}%; background-color: ${color}"></div>
+                            </div>
                         </div>
                     `;
                 }
 
-                let taskList = `<div class="space-y-2 flex-grow sortable-tasks" data-wf="${wfIdx}">`;
+                const displayStyle = isCollapsed && !appState.isEditMode ? 'none' : 'block';
+                let taskList = `<div class="px-3 pb-3 space-y-1 flex-grow sortable-tasks" data-wf="${wfIdx}" style="display: ${displayStyle}">`;
+                
                 wf.tasks.forEach((task, tIdx) => {
                     if(appState.isEditMode) {
                         taskList += `
-                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 group/edit shadow-sm">
-                                <div class="flex gap-2 mb-2">
-                                    <div class="flex-grow">
-                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Task Name</label>
-                                        <input type="text" value="${task.name}" class="text-sm w-full bg-white border border-gray-200 rounded p-1 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
-                                    </div>
-                                    <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-gray-300 hover:text-red-500 mt-4"><i class="fa-solid fa-times"></i></button>
+                            <div class="bg-gray-50 p-2 rounded border border-gray-200 mb-1">
+                                <div class="flex gap-2 mb-1">
+                                    <input type="text" value="${task.name}" class="text-xs w-full bg-white border border-gray-200 rounded p-1" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
+                                    <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-red-400"><i class="fa-solid fa-times text-xs"></i></button>
                                 </div>
-                                <div class="mb-2">
-                                    <label class="text-[10px] font-bold text-gray-400 uppercase">File Path / URL</label>
-                                    <input type="text" value="${task.link || ''}" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-500 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
-                                </div>
-                                <div class="flex gap-2">
-                                    <div class="w-1/2">
-                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Width (Web Only)</label>
-                                        <input type="number" value="${task.width || ''}" placeholder="e.g. 800" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-500 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'width', this.value)">
-                                    </div>
-                                    <div class="w-1/2">
-                                        <label class="text-[10px] font-bold text-gray-400 uppercase">Height (Web Only)</label>
-                                        <input type="number" value="${task.height || ''}" placeholder="e.g. 600" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-500 focus:outline-none focus:border-indigo-500" onchange="updateTask(${wfIdx}, ${tIdx}, 'height', this.value)">
-                                    </div>
+                                <input type="text" value="${task.link || ''}" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-400" placeholder="Path..." onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
+                                <div class="flex gap-1 mt-1">
+                                     <input type="number" value="${task.width || ''}" placeholder="W" class="w-1/2 text-[9px] bg-white border rounded p-0.5 text-center" onchange="updateTask(${wfIdx}, ${tIdx}, 'width', this.value)">
+                                     <input type="number" value="${task.height || ''}" placeholder="H" class="w-1/2 text-[9px] bg-white border rounded p-0.5 text-center" onchange="updateTask(${wfIdx}, ${tIdx}, 'height', this.value)">
                                 </div>
                             </div>
                         `;
                     } else {
                         const isDone = appState.progress[`${wfIdx}_${tIdx}`];
-                        const linkBtn = task.link ? `<button onclick="openLink('${task.link.replace(/\\/g, '\\\\')}', ${task.width}, ${task.height})" class="text-indigo-400 hover:text-indigo-600 ml-auto p-1 rounded hover:bg-indigo-50 transition-colors" title="Open Link"><i class="fa-solid fa-arrow-up-right-from-square"></i></button>` : '';
+                        const linkBtn = task.link ? `<button onclick="openLink('${task.link.replace(/\\/g, '\\\\')}', ${task.width}, ${task.height})" class="text-indigo-400 hover:text-indigo-600 ml-auto p-1 hover:bg-indigo-50 rounded"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></button>` : '';
                         
                         taskList += `
-                            <div class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer border border-transparent hover:border-gray-100" onclick="toggleTask(${wfIdx}, ${tIdx})">
-                                <div class="relative flex items-center justify-center">
-                                    <input type="checkbox" class="custom-checkbox" ${isDone ? 'checked' : ''}>
-                                </div>
-                                <span class="text-sm text-gray-600 ${isDone ? 'line-through text-gray-400' : ''} select-none flex-grow font-medium">${task.name}</span>
+                            <div class="flex items-start gap-2 p-1.5 rounded hover:bg-gray-50 transition-colors group cursor-pointer" onclick="toggleTask(${wfIdx}, ${tIdx})">
+                                <div class="pt-0.5"><input type="checkbox" class="custom-checkbox" ${isDone ? 'checked' : ''}></div>
+                                <span class="text-xs text-gray-600 ${isDone ? 'line-through text-gray-400' : ''} select-none flex-grow leading-tight pt-0.5">${task.name}</span>
                                 <div onclick="event.stopPropagation()">${linkBtn}</div>
                             </div>
                         `;
@@ -503,22 +399,16 @@
 
                 let footer = '';
                 if(appState.isEditMode) {
-                    footer = `<button onclick="addTask(${wfIdx})" class="mt-3 w-full py-2 border border-dashed border-indigo-200 text-indigo-500 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition-colors">+ Add Task</button>`;
-                } else if (wf.tasks.some(t => t.link)) {
-                    footer = `
-                        <button onclick="runMacro(${wfIdx})" class="mt-4 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
-                            <i class="fa-solid fa-rocket group-hover/btn:animate-bounce"></i> Launch All Apps
-                        </button>
-                    `;
+                    footer = `<div class="px-3 pb-3"><button onclick="addTask(${wfIdx})" class="w-full py-1.5 border border-dashed border-indigo-300 text-indigo-500 rounded text-[10px] hover:bg-indigo-50">+ Add</button></div>`;
+                } else if (wf.tasks.some(t => t.link) && !isCollapsed) {
+                    footer = `<div class="px-3 pb-3"><button onclick="runMacro(${wfIdx})" class="w-full py-1.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold hover:bg-indigo-600 hover:text-white transition-all"><i class="fa-solid fa-rocket mr-1"></i> Launch All</button></div>`;
                 }
 
-                card.innerHTML = header + taskList + footer;
+                card.innerHTML = colorBar + header + taskList + footer;
                 grid.appendChild(card);
             });
 
-            if(appState.isEditMode) {
-                initSortable();
-            }
+            if(appState.isEditMode) initSortable();
         }
 
         function updateProgressBar() {
@@ -527,100 +417,68 @@
                 total++;
                 if(appState.progress[`${wIdx}_${tIdx}`]) done++;
             }));
-            const pct = total === 0 ? 0 : (done/total)*100;
+            const pct = total === 0 ? 0 : Math.round((done/total)*100);
+            
+            // Update UI Stats
             document.getElementById('overall-progress-bar').style.width = `${pct}%`;
+            document.getElementById('progress-percent').innerText = `${pct}%`;
+            document.getElementById('progress-count').innerText = `${done}/${total} Tasks`;
         }
 
+        function toggleSidebar() {
+            appState.sidebarCollapsed = !appState.sidebarCollapsed;
+            const sb = document.getElementById('sidebar');
+            const icon = document.querySelector('#sidebar-toggle i');
+            
+            if(appState.sidebarCollapsed) {
+                sb.classList.add('collapsed');
+                icon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+            } else {
+                sb.classList.remove('collapsed');
+                icon.classList.replace('fa-chevron-right', 'fa-chevron-left');
+            }
+            saveData();
+        }
+
+        // Core Helpers
         function updateEditModeUI() {
             const btn = document.getElementById('edit-mode-btn');
             const fab = document.getElementById('add-workflow-fab');
-            const sidebar = document.getElementById('sidebar');
-
             if(appState.isEditMode) {
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> <span class="hidden sm:inline">Done</span>';
-                btn.classList.add('bg-green-500', 'text-white', 'border-transparent');
-                btn.classList.remove('bg-white', 'text-indigo-600', 'border-indigo-100');
-                fab.classList.remove('hidden');
-                fab.classList.add('flex');
+                btn.className = "bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold flex items-center gap-2 h-9 transition-all";
+                fab.classList.remove('hidden'); fab.classList.add('flex');
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit</span>';
-                btn.classList.remove('bg-green-500', 'text-white', 'border-transparent');
-                btn.classList.add('bg-white', 'text-indigo-600', 'border-indigo-100');
-                fab.classList.remove('flex');
-                fab.classList.add('hidden');
+                btn.className = "bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg shadow-sm text-xs font-semibold flex items-center gap-2 h-9 transition-all";
+                fab.classList.remove('flex'); fab.classList.add('hidden');
+            }
+        }
+
+        function openLink(path, w, h) {
+            if (path.startsWith('http') && w && h) {
+                window.open(path, '_blank', `width=${w},height=${h},left=100,top=100`);
+            } else {
+                window.electronAPI.openFile(path);
             }
         }
 
         function showToast(msg, type='info') {
             const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = msg;
-            
-            const icon = document.getElementById('toast-icon');
-            if(type === 'error') icon.className = 'fa-solid fa-circle-exclamation text-red-400';
-            else icon.className = 'fa-solid fa-circle-info text-indigo-400';
-
+            document.getElementById('toast-message').innerText = msg;
             toast.classList.remove('opacity-0', 'translate-y-20');
             setTimeout(() => toast.classList.add('opacity-0', 'translate-y-20'), 3000);
         }
 
-        // --- EXPORT & IMPORT FUNCTIONS ---
-        function exportTemplate() {
-            const dataToExport = {
-                exportedAt: new Date().toISOString(),
-                shortcuts: appState.shortcuts,
-                masterData: appState.masterData
-            };
-            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `planner_template_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Template exported successfully!', 'success');
-        }
-
-        function importTemplate(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    // Basic validation
-                    if (data.masterData && Array.isArray(data.masterData)) {
-                        if (confirm('Importing will overwrite current layouts. Continue?')) {
-                            appState.masterData = data.masterData;
-                            if (data.shortcuts) appState.shortcuts = data.shortcuts;
-                            saveData();
-                            renderAll();
-                            showToast('Template loaded successfully!', 'success');
-                        }
-                    } else {
-                        showToast('Invalid JSON template format', 'error');
-                    }
-                } catch (err) {
-                    showToast('Error reading file', 'error');
-                }
-                event.target.value = ''; // Reset
-            };
-            reader.readAsText(file);
-        }
-
-        // --- OPEN FILE LOGIC ---
-        function openLink(path, w, h) {
-            if (path.startsWith('http') && w && h) {
-                // Open Web Link with specific size
-                window.open(path, '_blank', `width=${w},height=${h},left=100,top=100`);
-            } else {
-                // Open Local File or standard link
-                window.electronAPI.openFile(path);
-            }
-        }
-
-        // --- Event Handlers & Actions ---
-
+        // Standard Logic (Same as before)
+        window.updateWorkflowTitle = (idx, val) => { appState.masterData[idx].title = val; };
+        window.updateTask = (wIdx, tIdx, field, val) => { appState.masterData[wIdx].tasks[tIdx][field] = val; };
+        window.addTask = (wIdx) => { appState.masterData[wIdx].tasks.push({name:'', link:''}); renderTasks(); };
+        window.removeTask = (wIdx, tIdx) => { appState.masterData[wIdx].tasks.splice(tIdx, 1); renderTasks(); };
+        window.deleteWorkflow = (idx) => { if(confirm('Delete?')) { appState.masterData.splice(idx, 1); renderTasks(); }};
+        window.updateShortcut = (idx, field, val) => { appState.shortcuts[idx][field] = val; };
+        window.deleteShortcut = (idx) => { appState.shortcuts.splice(idx, 1); renderShortcuts(); };
+        
         function toggleTask(wfIdx, tIdx) {
             if(appState.isEditMode) return;
             const key = `${wfIdx}_${tIdx}`;
@@ -628,109 +486,66 @@
             saveProgress();
             renderTasks();
         }
+        
+        function toggleCollapse(wfIdx) {
+            appState.collapsedCards[wfIdx] = !appState.collapsedCards[wfIdx];
+            saveData();
+            renderTasks();
+        }
 
         async function runMacro(wfIdx) {
             const tasks = appState.masterData[wfIdx].tasks.filter(t => t.link);
-            showToast(`🚀 Launching ${tasks.length} apps...`);
+            showToast(`Launching ${tasks.length} apps...`);
             for(const t of tasks) {
                 openLink(t.link, t.width, t.height);
-                await new Promise(r => setTimeout(r, 800)); // Delay
+                await new Promise(r => setTimeout(r, 800));
             }
         }
 
         function toggleEditMode() {
             appState.isEditMode = !appState.isEditMode;
-            if(!appState.isEditMode) {
-                saveData(); // Save on exit
-                showToast('Layout saved successfully');
-            }
+            if(!appState.isEditMode) { saveData(); showToast('Saved'); }
             updateEditModeUI();
             renderAll();
         }
 
-        // Data Manipulation
-        window.updateWorkflowTitle = (idx, val) => { appState.masterData[idx].title = val; };
-        window.updateTask = (wIdx, tIdx, field, val) => { appState.masterData[wIdx].tasks[tIdx][field] = val; };
-        window.addTask = (wIdx) => { appState.masterData[wIdx].tasks.push({name:'', link:''}); renderTasks(); };
-        window.removeTask = (wIdx, tIdx) => { appState.masterData[wIdx].tasks.splice(tIdx, 1); renderTasks(); };
-        window.deleteWorkflow = (idx) => { if(confirm('Delete workflow?')) { appState.masterData.splice(idx, 1); renderTasks(); }};
-        window.updateShortcut = (idx, field, val) => { appState.shortcuts[idx][field] = val; };
-        window.deleteShortcut = (idx) => { appState.shortcuts.splice(idx, 1); renderShortcuts(); };
-
+        // Listeners
         function setupEventListeners() {
-            document.getElementById('export-template-btn').onclick = exportTemplate;
+            document.getElementById('sidebar-toggle').onclick = toggleSidebar;
+            document.getElementById('export-template-btn').onclick = () => {
+                const blob = new Blob([JSON.stringify({ date: new Date(), shortcuts: appState.shortcuts, masterData: appState.masterData })], { type: 'application/json' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `planner_backup.json`; a.click();
+                showToast('Exported!');
+            };
+            const imp = document.getElementById('import-template-btn');
+            const file = document.getElementById('import-file-input');
+            if(imp) imp.onclick = () => file.click();
+            if(file) file.onchange = (e) => {
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    try {
+                        const d = JSON.parse(ev.target.result);
+                        if(d.masterData) { appState.masterData = d.masterData; if(d.shortcuts) appState.shortcuts = d.shortcuts; saveData(); renderAll(); showToast('Imported!'); }
+                    } catch(err) { showToast('Error', 'error'); }
+                };
+                r.readAsText(e.target.files[0]);
+            };
             
-            // Import Button Logic
-            const importBtn = document.getElementById('import-template-btn');
-            const fileInput = document.getElementById('import-file-input');
-            if(importBtn && fileInput) {
-                importBtn.onclick = () => fileInput.click();
-                fileInput.onchange = importTemplate;
-            }
-
-            document.getElementById('save-watch-btn').onclick = () => {
-                appState.watchPath = document.getElementById('watch-path-input').value;
-                saveData();
-                updateWatchList();
-                showToast('Watch folder updated');
-            };
-            document.getElementById('refresh-watch-btn').onclick = () => {
-                updateWatchList();
-                showToast('Scanning folder...');
-            };
-
             document.getElementById('edit-mode-btn').onclick = toggleEditMode;
-            document.getElementById('add-workflow-fab').onclick = () => {
-                appState.masterData.push({id: Date.now(), title: 'New Plan', tasks: []});
-                renderTasks();
-                setTimeout(() => {
-                    const container = document.getElementById('scroll-container');
-                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-                }, 100);
-            };
-            document.getElementById('add-shortcut-btn').onclick = () => {
-                appState.shortcuts.push({name:'New Link', link:''});
-                if(!appState.isEditMode) showToast('Enter Edit Mode to configure link', 'warning');
-                renderShortcuts();
-            };
-            document.getElementById('reset-day-btn').onclick = () => {
-                if(confirm('ต้องการรีเซ็ตข้อมูลของวันนี้ทั้งหมดหรือไม่? (ข้อมูลเดิมจะถูกล้าง)')) {
-                    localStorage.removeItem('taskMasterData');
-                    appState.progress = {};
-                    saveProgress();
-                    location.reload(); 
-                }
-            };
-            document.getElementById('today-btn').onclick = () => {
-                appState.currentDate = new Date();
-                loadProgress();
-                renderAll();
-            };
-            document.getElementById('date-picker').onchange = (e) => {
-                appState.currentDate = new Date(e.target.value);
-                loadProgress();
-                renderAll();
-            };
+            document.getElementById('add-workflow-fab').onclick = () => { appState.masterData.push({id: Date.now(), title: 'New Plan', tasks: []}); renderTasks(); };
+            document.getElementById('add-shortcut-btn').onclick = () => { appState.shortcuts.push({name:'Link', link:''}); renderShortcuts(); };
+            document.getElementById('reset-day-btn').onclick = () => { if(confirm('Reset?')) { localStorage.removeItem('taskMasterData'); appState.progress = {}; saveProgress(); location.reload(); } };
+            document.getElementById('today-btn').onclick = () => { appState.currentDate = new Date(); loadProgress(); renderAll(); };
+            document.getElementById('date-picker').onchange = (e) => { appState.currentDate = new Date(e.target.value); loadProgress(); renderAll(); };
         }
 
-        // Drag & Drop
         function initSortable() {
             new Sortable(document.getElementById('task-grid'), { handle: '.handle', animation: 150 });
-            document.querySelectorAll('.sortable-tasks').forEach(el => {
-                new Sortable(el, { group: 'tasks', animation: 150, onEnd: () => {
-                }});
-            });
+            document.querySelectorAll('.sortable-tasks').forEach(el => new Sortable(el, { group: 'tasks', animation: 150 }));
         }
 
         function startClock() {
-            // Updated for HH:MM:SS
-            setInterval(() => {
-                document.getElementById('clock-display').innerText = new Date().toLocaleTimeString('th-TH', {
-                    hour:'2-digit', 
-                    minute:'2-digit', 
-                    second:'2-digit'
-                });
-            }, 1000);
+            setInterval(() => document.getElementById('clock-display').innerText = new Date().toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit', second:'2-digit' }), 1000);
         }
 
         init();
