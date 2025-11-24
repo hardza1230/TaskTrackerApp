@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner Want to Go Home V.1.6</title>
+    <title>Planner Want to Go Home V.1.12</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -21,6 +21,9 @@
                             start: '#4F46E5',
                             end: '#9333EA',
                         }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -30,7 +33,7 @@
     <style>
         body { background-color: #F3F4F6; font-family: 'Sarabun', sans-serif; overflow: hidden; }
         
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
@@ -46,7 +49,7 @@
             transition: all 0.2s ease-in-out;
             border: 1px solid rgba(229, 231, 235, 0.8);
             break-inside: avoid;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             overflow: hidden;
         }
         .task-card:hover {
@@ -54,78 +57,80 @@
             box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
         }
 
-        /* Custom Checkbox */
         .custom-checkbox {
             appearance: none;
-            width: 1.1rem; height: 1.1rem;
-            border: 1.5px solid #CBD5E1; border-radius: 4px;
+            width: 1.25rem; height: 1.25rem;
+            border: 1.5px solid #CBD5E1; border-radius: 6px;
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.1s; cursor: pointer;
             flex-shrink: 0;
             background-color: white;
         }
         .custom-checkbox:checked {
-            background-color: #10B981; border-color: #10B981; /* Green for success */
+            background-color: #10B981; border-color: #10B981;
         }
         .custom-checkbox:checked::after {
             content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
-            color: white; font-size: 0.7rem;
+            color: white; font-size: 0.8rem;
         }
 
-        .masonry-grid { column-count: 1; column-gap: 1rem; }
+        .masonry-grid { column-count: 1; column-gap: 1.5rem; }
         @media (min-width: 768px) { .masonry-grid { column-count: 2; } }
         @media (min-width: 1280px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1536px) { .masonry-grid { column-count: 4; } }
 
-        /* Sidebar Collapse Logic */
         #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        #sidebar.collapsed { width: 4rem; }
+        #sidebar.collapsed { width: 4.5rem; }
         #sidebar.collapsed .sidebar-text { opacity: 0; width: 0; display: none; }
         #sidebar.collapsed .sidebar-icon-only { justify-content: center; }
         #sidebar.collapsed .sidebar-padding { padding-left: 0.5rem; padding-right: 0.5rem; }
+        #sidebar.collapsed #app-title-input { display: none; }
         
-        /* Card Header Colors */
-        .card-header-color { height: 6px; width: 100%; }
+        .card-header-color { height: 8px; width: 100%; }
+
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 sidebar-gradient flex flex-col shadow-2xl z-20 flex-shrink-0 relative">
-        <!-- Toggle Button -->
-        <button id="sidebar-toggle" class="absolute -right-3 top-6 bg-white text-indigo-600 rounded-full w-6 h-6 shadow-md flex items-center justify-center hover:scale-110 transition-transform z-50 border border-indigo-100">
-            <i class="fa-solid fa-chevron-left text-xs"></i>
+    <aside id="sidebar" class="w-72 sidebar-gradient flex flex-col shadow-2xl z-20 flex-shrink-0 relative">
+        <button id="sidebar-toggle" class="absolute -right-3 top-6 bg-white text-indigo-600 rounded-full w-7 h-7 shadow-md flex items-center justify-center hover:scale-110 transition-transform z-50 border border-indigo-100">
+            <i class="fa-solid fa-chevron-left text-sm"></i>
         </button>
 
-        <div class="p-5 flex items-center gap-3 text-white sidebar-icon-only overflow-hidden">
-            <div class="min-w-[2rem] h-8 rounded-lg bg-white/20 backdrop-blur flex items-center justify-center text-lg font-bold shadow-inner flex-shrink-0">
+        <div class="p-6 flex items-center gap-3 text-white sidebar-icon-only overflow-hidden">
+            <div class="min-w-[2.5rem] h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold shadow-inner flex-shrink-0">
                 <i class="fa-solid fa-house-person-return"></i>
             </div>
-            <h1 class="font-bold text-base whitespace-nowrap tracking-wide sidebar-text">Planner Home</h1>
+            <input type="text" id="app-title-input" class="bg-transparent border-b border-transparent hover:border-white/30 focus:border-white outline-none text-lg font-bold text-white w-full placeholder-white/50 transition-colors sidebar-text" value="Planner Home">
         </div>
 
-        <div class="flex-grow py-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar sidebar-padding">
-            <div class="text-[10px] font-bold text-indigo-200 uppercase tracking-wider mb-2 px-1 sidebar-text">Shortcuts</div>
-            <div id="shortcuts-container" class="space-y-1"></div>
+        <div class="flex-grow py-4 px-4 overflow-y-auto overflow-x-hidden custom-scrollbar sidebar-padding">
+            <div class="text-xs font-bold text-indigo-200 uppercase tracking-wider mb-3 px-1 sidebar-text">Shortcuts</div>
+            <div id="shortcuts-container" class="space-y-2"></div>
             
-            <button id="add-shortcut-btn" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-indigo-100 border border-white/10 hover:bg-white/10 transition-colors mt-2 group sidebar-icon-only">
-                <i class="fa-solid fa-plus text-xs group-hover:scale-110 transition-transform flex-shrink-0"></i>
-                <span class="text-xs font-medium sidebar-text">Add Shortcut</span>
+            <button id="add-shortcut-btn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-indigo-100 border border-white/10 hover:bg-white/10 transition-colors mt-4 group sidebar-icon-only">
+                <i class="fa-solid fa-plus text-sm group-hover:scale-110 transition-transform flex-shrink-0"></i>
+                <span class="text-sm font-medium sidebar-text">Add Shortcut</span>
             </button>
         </div>
 
-        <div class="p-3 border-t border-white/10 bg-black/10 space-y-2 sidebar-padding">
+        <div class="p-4 border-t border-white/10 bg-black/10 space-y-3 sidebar-padding">
             <div class="flex gap-2 sidebar-text">
-                <button id="import-template-btn" class="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-indigo-100 hover:text-white hover:bg-white/10 rounded-md transition-all border border-transparent hover:border-white/20" title="Import JSON">
-                    <i class="fa-solid fa-file-import text-xs"></i> <span class="text-xs">Import</span>
+                <button id="import-template-btn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20" title="Import JSON">
+                    <i class="fa-solid fa-file-import text-sm"></i> <span class="text-sm">Import</span>
                 </button>
-                <button id="export-template-btn" class="flex-1 flex items-center justify-center gap-2 px-2 py-1.5 text-indigo-100 hover:text-white hover:bg-white/10 rounded-md transition-all border border-transparent hover:border-white/20" title="Export JSON">
-                    <i class="fa-solid fa-file-export text-xs"></i> <span class="text-xs">Export</span>
+                <button id="export-template-btn" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20" title="Export JSON">
+                    <i class="fa-solid fa-file-export text-sm"></i> <span class="text-sm">Export</span>
                 </button>
             </div>
-            <button id="reset-day-btn" class="w-full flex items-center gap-2 px-2 py-1.5 text-red-200 hover:text-white hover:bg-red-500/20 rounded-md transition-all sidebar-icon-only" title="Factory Reset">
-                <i class="fa-solid fa-power-off w-4 text-center text-xs flex-shrink-0"></i>
-                <span class="text-xs sidebar-text">Reset Data</span>
+            <button id="reset-day-btn" class="w-full flex items-center gap-3 px-3 py-2 text-red-200 hover:text-white hover:bg-red-500/20 rounded-lg transition-all sidebar-icon-only" title="Factory Reset">
+                <i class="fa-solid fa-power-off w-5 text-center text-sm flex-shrink-0"></i>
+                <span class="text-sm sidebar-text">Reset Data</span>
             </button>
         </div>
     </aside>
@@ -134,65 +139,87 @@
     <main class="flex-grow flex flex-col h-screen overflow-hidden bg-[#F3F4F6] relative">
         
         <!-- Header -->
-        <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 z-10 sticky top-0 shadow-sm">
+        <header class="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-4 z-10 sticky top-0 shadow-sm">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                
-                <!-- Left: Title & Clock -->
-                <div class="flex items-center gap-4 w-full md:w-auto">
+                <div class="flex items-center gap-6 w-full md:w-auto">
                     <div>
-                        <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                            Planner V.1.6
+                        <h2 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+                            Daily Plan
                         </h2>
-                        <span id="clock-display" class="text-xs font-bold text-gray-400 font-mono">--:--:--</span>
+                        <span id="clock-display" class="text-sm font-bold text-gray-400 font-mono">--:--:--</span>
                     </div>
-                    <div class="h-8 w-px bg-gray-200 hidden md:block"></div>
-                    <!-- Progress Stats -->
-                    <div class="flex flex-col">
-                        <div class="flex items-end gap-2">
-                            <span id="progress-percent" class="text-2xl font-bold text-indigo-600 leading-none">0%</span>
-                            <span id="progress-count" class="text-xs font-medium text-gray-500 mb-1">0/0 Tasks</span>
+                    <div class="h-10 w-px bg-gray-200 hidden md:block"></div>
+                    <div class="flex flex-col justify-center">
+                        <div class="flex items-end gap-3">
+                            <span id="progress-percent" class="text-3xl font-bold text-indigo-600 leading-none">0%</span>
+                            <span id="progress-count" class="text-sm font-medium text-gray-500 mb-1">0/0 Tasks</span>
                         </div>
-                        <div class="w-32 h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                        <div class="w-48 h-2 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
                             <div id="overall-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right: Controls & Date -->
-                <div class="flex items-center gap-3 ml-auto">
-                    <button id="edit-mode-btn" class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg shadow-sm transition-all text-xs font-semibold flex items-center gap-2 h-9">
-                        <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit</span>
+                <div class="flex items-center gap-4 ml-auto">
+                    <button id="edit-mode-btn" class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl shadow-sm transition-all text-sm font-bold flex items-center gap-2 h-10">
+                        <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit Mode</span>
                     </button>
 
-                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
-
-                    <!-- Date Picker Group (Right Aligned) -->
-                    <div class="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-200 h-9">
-                        <button id="today-btn" class="px-3 py-1 rounded bg-white text-indigo-600 shadow-sm font-bold text-xs hover:text-indigo-800 transition-colors mr-2">Today</button>
-                        <input type="date" id="date-picker" class="bg-transparent border-none text-xs text-gray-600 focus:ring-0 cursor-pointer font-medium">
-                        <div class="px-2 text-gray-400"><i class="fa-regular fa-calendar"></i></div>
+                    <div class="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-200 h-10">
+                        <button id="today-btn" class="px-4 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm font-bold text-sm hover:text-indigo-800 transition-colors mr-2">Today</button>
+                        <input type="date" id="date-picker" class="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer font-medium">
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- Content Area -->
-        <div id="scroll-container" class="flex-grow overflow-y-auto p-4 custom-scrollbar">
-            <div id="task-grid" class="masonry-grid pb-20">
+        <div id="scroll-container" class="flex-grow overflow-y-auto p-6 custom-scrollbar">
+            <div id="task-grid" class="masonry-grid pb-24">
                 <!-- Cards injected here -->
             </div>
         </div>
 
-        <!-- FAB -->
-        <button id="add-workflow-fab" class="hidden fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-lg shadow-indigo-300 hover:scale-110 hover:shadow-xl transition-all items-center justify-center text-2xl z-30">
-            <i class="fa-solid fa-plus"></i>
-        </button>
+        <!-- FAB Group -->
+        <div class="fixed bottom-8 right-8 flex flex-col gap-4 z-30">
+            <button id="magic-report-btn" class="w-16 h-16 bg-white text-indigo-600 rounded-full shadow-lg shadow-indigo-200 hover:scale-110 hover:text-indigo-800 transition-all flex items-center justify-center text-2xl border-2 border-indigo-100" title="Auto Report Generator">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>
+            <button id="add-workflow-fab" class="hidden w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-lg shadow-indigo-300 hover:scale-110 hover:shadow-xl transition-all items-center justify-center text-2xl">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+
+        <!-- REPORT MODAL -->
+        <div id="report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg m-4 overflow-hidden transform scale-95 transition-transform duration-300" id="report-modal-content">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 text-white flex justify-between items-center">
+                    <h3 class="font-bold text-xl"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Auto Report</h3>
+                    <button id="close-report-btn" class="hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors"><i class="fa-solid fa-times text-lg"></i></button>
+                </div>
+                <div class="p-6">
+                    <div class="mb-5">
+                        <label class="text-sm font-bold text-gray-500 uppercase mb-2 block">Generated Summary</label>
+                        <textarea id="report-output" class="w-full h-56 p-4 text-base bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-gray-700 resize-none"></textarea>
+                    </div>
+                    <div class="mb-5">
+                        <label class="text-sm font-bold text-gray-500 uppercase mb-2 block">Smart Snippets (Click to Append)</label>
+                        <div class="flex flex-wrap gap-2" id="snippets-container"></div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                        <button id="copy-report-btn" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 hover:shadow-indigo-300 transition-all flex items-center gap-2 text-sm">
+                            <i class="fa-regular fa-copy"></i> Copy to Clipboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Toast -->
         <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 transform translate-y-20 opacity-0 transition-all duration-300 z-50 pointer-events-none">
-            <div class="bg-gray-800/90 backdrop-blur text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border border-gray-700">
-                <i id="toast-icon" class="fa-solid fa-info-circle text-indigo-400"></i>
-                <span id="toast-message" class="text-xs font-medium">Notification</span>
+            <div class="bg-gray-800/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700">
+                <i id="toast-icon" class="fa-solid fa-info-circle text-indigo-400 text-lg"></i>
+                <span id="toast-message" class="text-base font-medium">Notification</span>
             </div>
         </div>
 
@@ -207,17 +234,9 @@
             { id: 'fa-truck-fast', label: 'รถ' }, { id: 'fa-industry', label: 'ผลิต' }
         ];
         
-        // Vivid Colors for Topics
-        const CARD_COLORS = [
-            '#EF4444', // Red
-            '#F59E0B', // Amber
-            '#10B981', // Emerald
-            '#3B82F6', // Blue
-            '#8B5CF6', // Violet
-            '#EC4899', // Pink
-            '#06B6D4', // Cyan
-            '#F97316'  // Orange
-        ];
+        const CARD_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
+
+        const SNIPPETS = ["✅ Complete", "⚠️ Pending", "❌ Machine Breakdown", "รอวัตถุดิบ", "ส่งแผนแล้ว", "ติดประชุม", "รออนุมัติ", "กำลังดำเนินการ"];
 
         if (typeof window.electronAPI === 'undefined') {
             window.electronAPI = { openFile: async (path) => { console.log(`[Sim] Open: ${path}`); return { success: true }; } };
@@ -230,7 +249,8 @@
             shortcuts: [],
             progress: {},
             collapsedCards: {},
-            sidebarCollapsed: false
+            sidebarCollapsed: false,
+            appTitle: "Planner Home"
         };
 
         const DEFAULT_DATA = [ { "id": 1, "title": "Start Day", "tasks": [{ "name": "Login", "link": "" }] } ];
@@ -249,15 +269,17 @@
             appState.shortcuts = savedShortcuts ? JSON.parse(savedShortcuts) : [];
             const savedCollapsed = localStorage.getItem('collapsedCards');
             appState.collapsedCards = savedCollapsed ? JSON.parse(savedCollapsed) : {};
-            
-            // Load Sidebar State
             const sbState = localStorage.getItem('sidebarCollapsed');
             if(sbState === 'true') {
                 appState.sidebarCollapsed = true;
                 document.getElementById('sidebar').classList.add('collapsed');
                 document.querySelector('#sidebar-toggle i').classList.replace('fa-chevron-left', 'fa-chevron-right');
             }
-
+            const savedTitle = localStorage.getItem('appTitle');
+            if(savedTitle) {
+                appState.appTitle = savedTitle;
+                document.getElementById('app-title-input').value = savedTitle;
+            }
             loadProgress();
         }
 
@@ -271,6 +293,7 @@
             localStorage.setItem('shortcutData', JSON.stringify(appState.shortcuts));
             localStorage.setItem('collapsedCards', JSON.stringify(appState.collapsedCards));
             localStorage.setItem('sidebarCollapsed', appState.sidebarCollapsed);
+            localStorage.setItem('appTitle', appState.appTitle);
         }
 
         function saveProgress() {
@@ -279,6 +302,68 @@
             updateProgressBar();
         }
 
+        // --- MAGIC REPORT GENERATOR ---
+        function openReportModal() {
+            const modal = document.getElementById('report-modal');
+            const content = document.getElementById('report-modal-content');
+            const output = document.getElementById('report-output');
+            const snippetsContainer = document.getElementById('snippets-container');
+
+            const dateStr = appState.currentDate.toLocaleDateString('th-TH', {day: 'numeric', month: 'short', year: '2-digit'});
+            let report = `📅 อัปเดตงานวันที่ ${dateStr}\n------------------\n`;
+            let hasContent = false;
+
+            appState.masterData.forEach((wf, wIdx) => {
+                // Updated check logic for non-empty string/true
+                const completedTasks = wf.tasks.filter((t, tIdx) => appState.progress[`${wIdx}_${tIdx}`]);
+                if(completedTasks.length > 0) {
+                    hasContent = true;
+                    report += `\n📌 ${wf.title}:\n`;
+                    completedTasks.forEach(t => {
+                        const tIdx = wf.tasks.indexOf(t);
+                        const val = appState.progress[`${wIdx}_${tIdx}`];
+                        const timeStr = typeof val === 'string' ? ` [${val}]` : '';
+                        report += `   - ${t.name}${timeStr}\n`;
+                    });
+                }
+            });
+
+            if(!hasContent) report += "\n(ยังไม่มีรายการที่เสร็จสมบูรณ์)";
+            else report += "\n------------------\nจบการรายงาน";
+
+            output.value = report;
+
+            snippetsContainer.innerHTML = '';
+            SNIPPETS.forEach(txt => {
+                const btn = document.createElement('button');
+                btn.className = "px-3 py-1.5 bg-gray-100 hover:bg-indigo-100 text-indigo-600 text-sm rounded-full border border-gray-200 transition-colors font-medium";
+                btn.textContent = txt;
+                btn.onclick = () => { output.value += `\n${txt}`; output.scrollTop = output.scrollHeight; };
+                snippetsContainer.appendChild(btn);
+            });
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('report-modal');
+            const content = document.getElementById('report-modal-content');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+        }
+
+        function copyReportToClipboard() {
+            const output = document.getElementById('report-output');
+            output.select();
+            document.execCommand('copy');
+            showToast('Report copied to clipboard!', 'success');
+            setTimeout(closeReportModal, 500);
+        }
+
+        // --- RENDER LOGIC ---
         function renderAll() {
             document.getElementById('date-picker').value = appState.currentDate.toISOString().split('T')[0];
             renderShortcuts();
@@ -293,24 +378,23 @@
             appState.shortcuts.forEach((sc, idx) => {
                 const btn = document.createElement('div');
                 const iconClass = sc.icon || 'fa-bolt';
-                
                 if(appState.isEditMode) {
                     let iconOptions = ICONS.map(i => `<option value="${i.id}" ${iconClass === i.id ? 'selected' : ''}>${i.label}</option>`).join('');
-                    btn.className = 'flex flex-col gap-1.5 p-2 bg-white/10 rounded-lg border border-white/20 mb-2 sidebar-icon-only';
+                    btn.className = 'flex flex-col gap-2 p-3 bg-white/10 rounded-xl border border-white/20 mb-3 sidebar-icon-only';
                     btn.innerHTML = `
                         <div class="flex gap-2">
-                             <select class="text-[10px] w-8 bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'icon', this.value)">${iconOptions}</select>
-                             <input type="text" value="${sc.name}" class="w-full text-[10px] bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'name', this.value)">
+                             <select class="text-xs w-10 bg-black/20 text-white rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'icon', this.value)">${iconOptions}</select>
+                             <input type="text" value="${sc.name}" class="w-full text-xs bg-black/20 text-white rounded p-1.5 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'name', this.value)">
                         </div>
-                        <input type="text" value="${sc.link}" class="w-full text-[9px] bg-black/20 text-indigo-100 rounded p-1 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'link', this.value)">
-                        <button onclick="deleteShortcut(${idx})" class="text-[9px] text-red-300 bg-red-500/20 py-0.5 rounded w-full">Del</button>
+                        <input type="text" value="${sc.link}" class="w-full text-xs bg-black/20 text-indigo-100 rounded p-1.5 border border-white/10 focus:outline-none" onchange="updateShortcut(${idx}, 'link', this.value)">
+                        <button onclick="deleteShortcut(${idx})" class="text-xs text-red-300 bg-red-500/20 py-1 rounded w-full hover:bg-red-500/30 transition-colors">Delete</button>
                     `;
                 } else {
-                    btn.className = 'flex items-center gap-3 px-3 py-2 rounded-lg text-indigo-50 hover:bg-white/10 hover:text-white transition-all cursor-pointer group/item border border-transparent hover:border-white/10 sidebar-icon-only';
+                    btn.className = 'flex items-center gap-4 px-4 py-3 rounded-xl text-indigo-50 hover:bg-white/10 hover:text-white transition-all cursor-pointer group/item border border-transparent hover:border-white/10 sidebar-icon-only';
                     btn.onclick = () => window.electronAPI.openFile(sc.link);
                     btn.innerHTML = `
-                        <div class="w-6 h-6 flex items-center justify-center flex-shrink-0"><i class="fa-solid ${iconClass} text-xs text-yellow-300"></i></div>
-                        <span class="whitespace-nowrap text-xs font-medium truncate sidebar-text">${sc.name}</span>
+                        <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-white/5 rounded-lg group-hover/item:bg-white/20 transition-colors"><i class="fa-solid ${iconClass} text-sm text-yellow-300"></i></div>
+                        <span class="whitespace-nowrap text-sm font-medium truncate sidebar-text">${sc.name}</span>
                     `;
                 }
                 container.appendChild(btn);
@@ -320,11 +404,9 @@
         function renderTasks() {
             const grid = document.getElementById('task-grid');
             grid.innerHTML = '';
-
             appState.masterData.forEach((wf, wfIdx) => {
                 const isCollapsed = appState.collapsedCards[wfIdx];
-                const color = CARD_COLORS[wfIdx % CARD_COLORS.length]; // Cycle colors
-                
+                const color = CARD_COLORS[wfIdx % CARD_COLORS.length];
                 const card = document.createElement('div');
                 card.className = 'task-card flex flex-col animate-fade-in';
                 
@@ -332,64 +414,66 @@
                 const completedCount = wf.tasks.filter((_, tIdx) => appState.progress[`${wfIdx}_${tIdx}`]).length;
                 const total = wf.tasks.length;
                 const percent = total === 0 ? 0 : Math.round((completedCount/total)*100);
-
-                // Topic Color Bar
                 const colorBar = `<div class="card-header-color" style="background-color: ${color};"></div>`;
 
                 if(appState.isEditMode) {
                     header = `
-                        <div class="p-3 pb-1">
-                            <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-1">
-                                <i class="fa-solid fa-grip-vertical text-gray-300 cursor-move handle text-xs"></i>
-                                <input type="text" value="${wf.title}" class="font-bold text-sm text-gray-700 bg-transparent focus:outline-none w-full" onchange="updateWorkflowTitle(${wfIdx}, this.value)">
-                                <button onclick="deleteWorkflow(${wfIdx})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                        <div class="p-4 pb-2">
+                            <div class="flex items-center gap-3 mb-2 border-b border-gray-100 pb-2">
+                                <i class="fa-solid fa-grip-vertical text-gray-300 cursor-move handle text-sm hover:text-indigo-500"></i>
+                                <input type="text" value="${wf.title}" class="font-bold text-base text-gray-800 bg-transparent focus:outline-none w-full focus:border-b focus:border-indigo-500" onchange="updateWorkflowTitle(${wfIdx}, this.value)">
+                                <button onclick="deleteWorkflow(${wfIdx})" class="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
                             </div>
                         </div>
                     `;
                 } else {
                     const chevron = isCollapsed ? 'fa-chevron-down' : 'fa-chevron-up';
                     header = `
-                        <div class="p-3 pb-2 cursor-pointer" onclick="toggleCollapse(${wfIdx})">
-                            <div class="flex justify-between items-center mb-1">
-                                <h3 class="font-bold text-sm text-slate-800 line-clamp-1" style="color: ${color}">${wf.title}</h3>
+                        <div class="p-4 pb-3 cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleCollapse(${wfIdx})">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-bold text-base text-slate-800 line-clamp-1" style="color: ${color}">${wf.title}</h3>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-gray-400">${completedCount}/${total}</span>
-                                    <i class="fa-solid ${chevron} text-gray-300 text-[10px]"></i>
+                                    <span class="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">${completedCount}/${total}</span>
+                                    <i class="fa-solid ${chevron} text-gray-300 text-xs transition-transform duration-200"></i>
                                 </div>
                             </div>
-                            <div class="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-                                 <div class="h-1 rounded-full transition-all duration-300" style="width: ${percent}%; background-color: ${color}"></div>
+                            <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                 <div class="h-1.5 rounded-full transition-all duration-300" style="width: ${percent}%; background-color: ${color}"></div>
                             </div>
                         </div>
                     `;
                 }
 
                 const displayStyle = isCollapsed && !appState.isEditMode ? 'none' : 'block';
-                let taskList = `<div class="px-3 pb-3 space-y-1 flex-grow sortable-tasks" data-wf="${wfIdx}" style="display: ${displayStyle}">`;
+                let taskList = `<div class="px-4 pb-4 space-y-2 flex-grow sortable-tasks" data-wf="${wfIdx}" style="display: ${displayStyle}">`;
                 
                 wf.tasks.forEach((task, tIdx) => {
                     if(appState.isEditMode) {
                         taskList += `
-                            <div class="bg-gray-50 p-2 rounded border border-gray-200 mb-1">
-                                <div class="flex gap-2 mb-1">
-                                    <input type="text" value="${task.name}" class="text-xs w-full bg-white border border-gray-200 rounded p-1" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
-                                    <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-red-400"><i class="fa-solid fa-times text-xs"></i></button>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2">
+                                <div class="flex gap-3 mb-2">
+                                    <input type="text" value="${task.name}" class="text-sm w-full bg-white border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
+                                    <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-red-400 hover:text-red-600 p-1"><i class="fa-solid fa-times text-sm"></i></button>
                                 </div>
-                                <input type="text" value="${task.link || ''}" class="text-[10px] w-full bg-white border border-gray-200 rounded p-1 text-gray-400" placeholder="Path..." onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
-                                <div class="flex gap-1 mt-1">
-                                     <input type="number" value="${task.width || ''}" placeholder="W" class="w-1/2 text-[9px] bg-white border rounded p-0.5 text-center" onchange="updateTask(${wfIdx}, ${tIdx}, 'width', this.value)">
-                                     <input type="number" value="${task.height || ''}" placeholder="H" class="w-1/2 text-[9px] bg-white border rounded p-0.5 text-center" onchange="updateTask(${wfIdx}, ${tIdx}, 'height', this.value)">
-                                </div>
+                                <input type="text" value="${task.link || ''}" class="text-xs w-full bg-white border border-gray-200 rounded p-1.5 text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-2" placeholder="Path/URL..." onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
                             </div>
                         `;
                     } else {
-                        const isDone = appState.progress[`${wfIdx}_${tIdx}`];
-                        const linkBtn = task.link ? `<button onclick="openLink('${task.link.replace(/\\/g, '\\\\')}', ${task.width}, ${task.height})" class="text-indigo-400 hover:text-indigo-600 ml-auto p-1 hover:bg-indigo-50 rounded"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></button>` : '';
+                        const progressVal = appState.progress[`${wfIdx}_${tIdx}`];
+                        const isDone = !!progressVal; 
+                        const timestamp = isDone && typeof progressVal === 'string' ? progressVal : '';
                         
+                        const linkBtn = task.link ? `<button onclick="openLinkWithConfig(${wfIdx}, ${tIdx})" class="text-indigo-500 hover:text-indigo-700 ml-auto p-1.5 hover:bg-indigo-50 rounded-lg transition-colors" title="Open"><i class="fa-solid fa-arrow-up-right-from-square text-sm"></i></button>` : '';
+                        
+                        const timestampHtml = timestamp ? `<span class="text-[10px] font-mono text-green-600 bg-green-50 px-1.5 rounded ml-2 border border-green-100">${timestamp}</span>` : '';
+
                         taskList += `
-                            <div class="flex items-start gap-2 p-1.5 rounded hover:bg-gray-50 transition-colors group cursor-pointer" onclick="toggleTask(${wfIdx}, ${tIdx})">
+                            <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer" onclick="toggleTask(${wfIdx}, ${tIdx})">
                                 <div class="pt-0.5"><input type="checkbox" class="custom-checkbox" ${isDone ? 'checked' : ''}></div>
-                                <span class="text-xs text-gray-600 ${isDone ? 'line-through text-gray-400' : ''} select-none flex-grow leading-tight pt-0.5">${task.name}</span>
+                                <div class="flex-grow pt-0.5">
+                                    <span class="text-sm text-gray-700 ${isDone ? 'line-through text-gray-400' : ''} select-none font-medium leading-snug">${task.name}</span>
+                                    ${timestampHtml}
+                                </div>
                                 <div onclick="event.stopPropagation()">${linkBtn}</div>
                             </div>
                         `;
@@ -399,27 +483,21 @@
 
                 let footer = '';
                 if(appState.isEditMode) {
-                    footer = `<div class="px-3 pb-3"><button onclick="addTask(${wfIdx})" class="w-full py-1.5 border border-dashed border-indigo-300 text-indigo-500 rounded text-[10px] hover:bg-indigo-50">+ Add</button></div>`;
+                    footer = `<div class="px-4 pb-4"><button onclick="addTask(${wfIdx})" class="w-full py-2 border border-dashed border-indigo-300 text-indigo-500 rounded-lg text-xs font-bold hover:bg-indigo-50 uppercase tracking-wider transition-colors">+ Add Task</button></div>`;
                 } else if (wf.tasks.some(t => t.link) && !isCollapsed) {
-                    footer = `<div class="px-3 pb-3"><button onclick="runMacro(${wfIdx})" class="w-full py-1.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold hover:bg-indigo-600 hover:text-white transition-all"><i class="fa-solid fa-rocket mr-1"></i> Launch All</button></div>`;
+                    footer = `<div class="px-4 pb-4"><button onclick="runMacro(${wfIdx})" class="w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all uppercase tracking-wider"><i class="fa-solid fa-rocket mr-2"></i> Launch All</button></div>`;
                 }
 
                 card.innerHTML = colorBar + header + taskList + footer;
                 grid.appendChild(card);
             });
-
             if(appState.isEditMode) initSortable();
         }
 
         function updateProgressBar() {
             let total = 0, done = 0;
-            appState.masterData.forEach((wf, wIdx) => wf.tasks.forEach((_, tIdx) => {
-                total++;
-                if(appState.progress[`${wIdx}_${tIdx}`]) done++;
-            }));
+            appState.masterData.forEach((wf, wIdx) => wf.tasks.forEach((_, tIdx) => { total++; if(appState.progress[`${wIdx}_${tIdx}`]) done++; }));
             const pct = total === 0 ? 0 : Math.round((done/total)*100);
-            
-            // Update UI Stats
             document.getElementById('overall-progress-bar').style.width = `${pct}%`;
             document.getElementById('progress-percent').innerText = `${pct}%`;
             document.getElementById('progress-count').innerText = `${done}/${total} Tasks`;
@@ -429,38 +507,29 @@
             appState.sidebarCollapsed = !appState.sidebarCollapsed;
             const sb = document.getElementById('sidebar');
             const icon = document.querySelector('#sidebar-toggle i');
-            
-            if(appState.sidebarCollapsed) {
-                sb.classList.add('collapsed');
-                icon.classList.replace('fa-chevron-left', 'fa-chevron-right');
-            } else {
-                sb.classList.remove('collapsed');
-                icon.classList.replace('fa-chevron-right', 'fa-chevron-left');
-            }
+            if(appState.sidebarCollapsed) { sb.classList.add('collapsed'); icon.classList.replace('fa-chevron-left', 'fa-chevron-right'); } 
+            else { sb.classList.remove('collapsed'); icon.classList.replace('fa-chevron-right', 'fa-chevron-left'); }
             saveData();
         }
 
-        // Core Helpers
         function updateEditModeUI() {
             const btn = document.getElementById('edit-mode-btn');
             const fab = document.getElementById('add-workflow-fab');
             if(appState.isEditMode) {
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> <span class="hidden sm:inline">Done</span>';
-                btn.className = "bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold flex items-center gap-2 h-9 transition-all";
+                btn.className = "bg-green-500 text-white px-4 py-2 rounded-xl shadow-sm text-sm font-bold flex items-center gap-2 h-10 transition-all hover:bg-green-600";
                 fab.classList.remove('hidden'); fab.classList.add('flex');
             } else {
-                btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit</span>';
-                btn.className = "bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg shadow-sm text-xs font-semibold flex items-center gap-2 h-9 transition-all";
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit Mode</span>';
+                btn.className = "bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl shadow-sm text-sm font-bold flex items-center gap-2 h-10 transition-all";
                 fab.classList.remove('flex'); fab.classList.add('hidden');
             }
         }
 
-        function openLink(path, w, h) {
-            if (path.startsWith('http') && w && h) {
-                window.open(path, '_blank', `width=${w},height=${h},left=100,top=100`);
-            } else {
-                window.electronAPI.openFile(path);
-            }
+        function openLinkWithConfig(wfIdx, tIdx) {
+            const task = appState.masterData[wfIdx].tasks[tIdx];
+            const path = task.link;
+            window.electronAPI.openFile(path);
         }
 
         function showToast(msg, type='info') {
@@ -470,9 +539,9 @@
             setTimeout(() => toast.classList.add('opacity-0', 'translate-y-20'), 3000);
         }
 
-        // Standard Logic (Same as before)
         window.updateWorkflowTitle = (idx, val) => { appState.masterData[idx].title = val; };
         window.updateTask = (wIdx, tIdx, field, val) => { appState.masterData[wIdx].tasks[tIdx][field] = val; };
+        
         window.addTask = (wIdx) => { appState.masterData[wIdx].tasks.push({name:'', link:''}); renderTasks(); };
         window.removeTask = (wIdx, tIdx) => { appState.masterData[wIdx].tasks.splice(tIdx, 1); renderTasks(); };
         window.deleteWorkflow = (idx) => { if(confirm('Delete?')) { appState.masterData.splice(idx, 1); renderTasks(); }};
@@ -482,7 +551,12 @@
         function toggleTask(wfIdx, tIdx) {
             if(appState.isEditMode) return;
             const key = `${wfIdx}_${tIdx}`;
-            appState.progress[key] = !appState.progress[key];
+            if (appState.progress[key]) {
+                delete appState.progress[key]; 
+            } else {
+                const now = new Date();
+                appState.progress[key] = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); 
+            }
             saveProgress();
             renderTasks();
         }
@@ -496,9 +570,10 @@
         async function runMacro(wfIdx) {
             const tasks = appState.masterData[wfIdx].tasks.filter(t => t.link);
             showToast(`Launching ${tasks.length} apps...`);
-            for(const t of tasks) {
-                openLink(t.link, t.width, t.height);
-                await new Promise(r => setTimeout(r, 800));
+            for(const t of tasks) { 
+                const tIdx = appState.masterData[wfIdx].tasks.indexOf(t);
+                openLinkWithConfig(wfIdx, tIdx); 
+                await new Promise(r => setTimeout(r, 800)); 
             }
         }
 
@@ -509,11 +584,10 @@
             renderAll();
         }
 
-        // Listeners
         function setupEventListeners() {
             document.getElementById('sidebar-toggle').onclick = toggleSidebar;
             document.getElementById('export-template-btn').onclick = () => {
-                const blob = new Blob([JSON.stringify({ date: new Date(), shortcuts: appState.shortcuts, masterData: appState.masterData })], { type: 'application/json' });
+                const blob = new Blob([JSON.stringify({ date: new Date(), shortcuts: appState.shortcuts, masterData: appState.masterData, title: appState.appTitle })], { type: 'application/json' });
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `planner_backup.json`; a.click();
                 showToast('Exported!');
             };
@@ -525,7 +599,14 @@
                 r.onload = (ev) => {
                     try {
                         const d = JSON.parse(ev.target.result);
-                        if(d.masterData) { appState.masterData = d.masterData; if(d.shortcuts) appState.shortcuts = d.shortcuts; saveData(); renderAll(); showToast('Imported!'); }
+                        if(d.masterData) { 
+                            appState.masterData = d.masterData; 
+                            if(d.shortcuts) appState.shortcuts = d.shortcuts; 
+                            if(d.title) appState.appTitle = d.title;
+                            saveData(); 
+                            init();
+                            showToast('Imported!'); 
+                        }
                     } catch(err) { showToast('Error', 'error'); }
                 };
                 r.readAsText(e.target.files[0]);
@@ -537,6 +618,18 @@
             document.getElementById('reset-day-btn').onclick = () => { if(confirm('Reset?')) { localStorage.removeItem('taskMasterData'); appState.progress = {}; saveProgress(); location.reload(); } };
             document.getElementById('today-btn').onclick = () => { appState.currentDate = new Date(); loadProgress(); renderAll(); };
             document.getElementById('date-picker').onchange = (e) => { appState.currentDate = new Date(e.target.value); loadProgress(); renderAll(); };
+
+            const titleInput = document.getElementById('app-title-input');
+            if(titleInput) {
+                titleInput.addEventListener('change', (e) => {
+                    appState.appTitle = e.target.value;
+                    saveData();
+                });
+            }
+
+            document.getElementById('magic-report-btn').onclick = openReportModal;
+            document.getElementById('close-report-btn').onclick = closeReportModal;
+            document.getElementById('copy-report-btn').onclick = copyReportToClipboard;
         }
 
         function initSortable() {
