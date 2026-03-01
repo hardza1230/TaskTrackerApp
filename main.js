@@ -1,5 +1,8 @@
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
+const { execFile } = require('child_process');
+const fs = require('fs');
+const os = require('os');
 
 const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -25,6 +28,52 @@ app.whenReady().then(() => {
     } catch (error) {
       return { success: false, error: error.message };
     }
+  });
+
+  // ฟังก์ชันพิเศษสำหรับเปิด Excel + Refresh + Save
+  ipcMain.handle('refresh-excel', async (event, filePath) => {
+    return new Promise((resolve) => {
+      // สร้างไฟล์ PowerShell จำลองแบบชั่วคราว
+      const scriptPath = path.join(os.tmpdir(), `refresh_excel_${Date.now()}.ps1`);
+      const psScript = `
+param($filePath)
+$ErrorActionPreference = 'Stop'
+try {
+    $excel = New-Object -ComObject Excel.Application
+    $excel.Visible = $false
+    $excel.DisplayAlerts = $false
+    $workbook = $excel.Workbooks.Open($filePath)
+    $workbook.RefreshAll()
+    Start-Sleep -Seconds 10
+    $workbook.Save()
+    $workbook.Close()
+    $excel.Quit()
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
+    Write-Output "SUCCESS"
+} catch {
+    Write-Error $_.Exception.Message
+    if ($excel) {
+        $excel.Quit()
+        [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
+    }
+    exit 1
+}
+`;
+      // เขียนไฟล์สคริปต์ลงเครื่อง
+      fs.writeFileSync(scriptPath, psScript);
+
+      // สั่งทำงานสคริปต์
+      execFile('powershell.exe', ['-ExecutionPolicy', 'Bypass', '-File', scriptPath, filePath], (error, stdout, stderr) => {
+        // ลบไฟล์ทิ้งหลังทำเสร็จ
+        try { fs.unlinkSync(scriptPath); } catch (e) { }
+
+        if (error) {
+          resolve({ success: false, error: stderr || error.message });
+        } else {
+          resolve({ success: true, output: stdout });
+        }
+      });
+    });
   });
 
   createWindow();
