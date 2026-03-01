@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Security-Policy"
         content="script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner Want to Go Home V.2</title>
+    <title>Planner Want to Go Home V.1.12</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
@@ -346,7 +346,8 @@
         if (typeof window.electronAPI === 'undefined') {
             window.electronAPI = {
                 openFile: async (path) => { console.log(`[Sim] Open: ${path}`); return { success: true }; },
-                refreshExcel: async (path) => { console.log(`[Sim] Refresh Excel: ${path}`); await new Promise(r => setTimeout(r, 2000)); return { success: true }; }
+                refreshExcel: async (path) => { console.log(`[Sim] Refresh Excel: ${path}`); await new Promise(r => setTimeout(r, 2000)); return { success: true }; },
+                runPython: async (path) => { console.log(`[Sim] Run Python: ${path}`); await new Promise(r => setTimeout(r, 2000)); return { success: true }; }
             };
         }
 
@@ -373,6 +374,18 @@
         function loadData() {
             const savedData = localStorage.getItem('taskMasterData');
             appState.masterData = savedData ? JSON.parse(savedData) : DEFAULT_DATA;
+
+            // --- Migration: แทรกแท็บ Automate Citrix ถ้ายังไม่มี ---
+            const hasCitrix = appState.masterData.some(wf => wf.title === "Automate Citrix Job");
+            if (!hasCitrix) {
+                appState.masterData.unshift({
+                    id: Date.now() + Math.random(),
+                    title: "Automate Citrix Job",
+                    tasks: [{ name: "Run Citrix Auto-Login", link: "C:\\Users\\norrasates\\.gemini\\antigravity\\scratch\\Automate Job\\citrix_full_automation.py" }]
+                });
+                saveData();
+            }
+
             const savedShortcuts = localStorage.getItem('shortcutData');
             appState.shortcuts = savedShortcuts ? JSON.parse(savedShortcuts) : [];
             const savedCollapsed = localStorage.getItem('collapsedCards');
@@ -574,11 +587,14 @@
                         let linkBtn = '';
                         if (task.link) {
                             const isExcel = task.link.toLowerCase().match(/\.(xlsx|xlsm|xls)$/);
+                            const isPython = task.link.toLowerCase().endsWith('.py');
                             let refreshBtn = '';
                             if (isExcel) {
                                 refreshBtn = `<button onclick="refreshExcelData(${wfIdx}, ${tIdx}); event.stopPropagation();" class="text-green-500 hover:text-green-700 p-1.5 hover:bg-green-50 rounded-lg transition-colors mr-1" title="Auto Refresh Excel"><i id="btn-refresh-${wfIdx}-${tIdx}" class="fa-solid fa-bolt text-sm"></i></button>`;
                             }
-                            linkBtn = `<div class="flex items-center ml-auto">${refreshBtn}<button onclick="openLinkWithConfig(${wfIdx}, ${tIdx}); event.stopPropagation();" class="text-indigo-500 hover:text-indigo-700 p-1.5 hover:bg-indigo-50 rounded-lg transition-colors" title="Open"><i class="fa-solid fa-arrow-up-right-from-square text-sm"></i></button></div>`;
+
+                            const iconClass = isPython ? 'fa-rocket text-orange-500 hover:text-orange-700' : 'fa-arrow-up-right-from-square text-indigo-500 hover:text-indigo-700';
+                            linkBtn = `<div class="flex items-center ml-auto">${refreshBtn}<button onclick="openLinkWithConfig(${wfIdx}, ${tIdx}); event.stopPropagation();" class="p-1.5 hover:bg-indigo-50 rounded-lg transition-colors" title="${isPython ? 'Run Python Script' : 'Open'}"><i id="btn-open-${wfIdx}-${tIdx}" class="fa-solid ${iconClass} text-sm"></i></button></div>`;
                         }
 
                         const timestampHtml = timestamp ? `<span class="text-[10px] font-mono text-green-600 bg-green-50 px-1.5 rounded ml-2 border border-green-100">${timestamp}</span>` : '';
@@ -642,10 +658,37 @@
             }
         }
 
-        function openLinkWithConfig(wfIdx, tIdx) {
+        async function openLinkWithConfig(wfIdx, tIdx) {
             const task = appState.masterData[wfIdx].tasks[tIdx];
             const path = task.link;
-            window.electronAPI.openFile(path);
+
+            if (path.toLowerCase().endsWith('.py')) {
+                showToast(`กำลังรัน Python: ${task.name}... (รอสักครู่)`);
+                const btnIcon = document.getElementById(`btn-open-${wfIdx}-${tIdx}`);
+                if (btnIcon) {
+                    btnIcon.classList.remove('fa-rocket');
+                    btnIcon.classList.add('fa-spinner', 'fa-spin');
+                }
+
+                try {
+                    const res = await window.electronAPI.runPython(path);
+                    if (res.success) {
+                        showToast(`✔️ รันสคริปต์เสร็จสิ้น!`, 'success');
+                    } else {
+                        showToast(`❌ Error: ${res.error}`, 'error');
+                        console.error("Python Error:", res.error);
+                    }
+                } catch (e) {
+                    showToast(`❌ Error: ${e.message}`, 'error');
+                }
+
+                if (btnIcon) {
+                    btnIcon.classList.remove('fa-spinner', 'fa-spin');
+                    btnIcon.classList.add('fa-rocket');
+                }
+            } else {
+                window.electronAPI.openFile(path);
+            }
         }
 
         async function refreshExcelData(wfIdx, tIdx) {

@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   refreshExcel: async (path) => {
     return await ipcRenderer.invoke('refresh-excel', path);
+  },
+  runPython: async (path) => {
+    return await ipcRenderer.invoke('run-python', path);
   }
-  // ลบ scanFolder ออกแล้ว
 });

@@ -30,6 +30,19 @@ app.whenReady().then(() => {
     }
   });
 
+  // ฟังก์ชันสั่งรันสคริปต์ Python
+  ipcMain.handle('run-python', async (event, filePath) => {
+    return new Promise((resolve) => {
+      execFile('python', [filePath], { cwd: path.dirname(filePath) }, (error, stdout, stderr) => {
+        if (error) {
+          resolve({ success: false, error: stderr || error.message });
+        } else {
+          resolve({ success: true, output: stdout });
+        }
+      });
+    });
+  });
+
   // ฟังก์ชันพิเศษสำหรับเปิด Excel + Refresh + Save
   ipcMain.handle('refresh-excel', async (event, filePath) => {
     return new Promise((resolve) => {
