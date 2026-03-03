@@ -9,5 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   runPython: async (path) => {
     return await ipcRenderer.invoke('run-python', path);
+  },
+  onPythonLog: (callback) => {
+    ipcRenderer.on('python-log', (event, data) => callback(data));
   }
 });

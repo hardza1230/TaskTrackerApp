@@ -33,12 +33,32 @@ app.whenReady().then(() => {
   // ฟังก์ชันสั่งรันสคริปต์ Python
   ipcMain.handle('run-python', async (event, filePath) => {
     return new Promise((resolve) => {
-      execFile('python', [filePath], { cwd: path.dirname(filePath) }, (error, stdout, stderr) => {
-        if (error) {
-          resolve({ success: false, error: stderr || error.message });
+      // Use spawn for potential future streaming, though here we still wait for completion
+      const { spawn } = require('child_process');
+      const process = spawn('python', [filePath], { cwd: path.dirname(filePath) });
+
+      let stdout = '';
+      let stderr = '';
+
+      process.stdout.on('data', (data) => {
+        stdout += data.toString();
+        event.sender.send('python-log', data.toString());
+      });
+
+      process.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      process.on('close', (code) => {
+        if (code !== 0) {
+          resolve({ success: false, error: stderr || `Process exited with code ${code}` });
         } else {
           resolve({ success: true, output: stdout });
         }
+      });
+
+      process.on('error', (err) => {
+        resolve({ success: false, error: err.message });
       });
     });
   });
@@ -53,11 +73,17 @@ param($filePath)
 $ErrorActionPreference = 'Stop'
 try {
     $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $false
+    $excel.Visible = $true
     $excel.DisplayAlerts = $false
     $workbook = $excel.Workbooks.Open($filePath)
     $workbook.RefreshAll()
-    Start-Sleep -Seconds 10
+    # Wait for background refreshes
+    $count = 0
+    while ($workbook.Queries | Where-Object { $_.Refreshing } -and $count -lt 60) {
+        Start-Sleep -Seconds 1
+        $count++
+    }
+    Start-Sleep -Seconds 2
     $workbook.Save()
     $workbook.Close()
     $excel.Quit()
