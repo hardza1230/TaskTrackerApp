@@ -131,6 +131,16 @@ export function renderTasks() {
             card.innerHTML = buildViewCard(wf, wfIdx, color, isCollapsed, completedCount, total, percent, query);
         }
 
+        // Apply saved custom height if exists and not collapsed
+        if (wf.boardH && !isCollapsed && !appState.isEditMode) {
+            card.style.height = wf.boardH + 'px';
+            const listContainer = card.querySelector('.custom-scrollbar');
+            if (listContainer) {
+                listContainer.style.maxHeight = 'none';
+                listContainer.classList.add('flex-grow');
+            }
+        }
+
         // Add Resize Handle
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'absolute bottom-0 right-0 w-5 h-5 cursor-se-resize flex items-end justify-end p-1 text-slate-300 hover:text-teal-500 transition-colors z-10';
@@ -315,13 +325,17 @@ function makeBoardCardDraggable(card, wfIdx) {
 function makeBoardCardResizable(card, handle, wfIdx) {
     let resizing = false;
     let startMX = 0;
+    let startMY = 0;
     let startW = 0;
+    let startH = 0;
 
     handle.addEventListener('mousedown', (e) => {
         e.stopPropagation(); // prevent triggering drag
         resizing = true;
         startMX = e.clientX;
+        startMY = e.clientY;
         startW = appState.masterData[wfIdx].boardW || CARD_MIN_W;
+        startH = appState.masterData[wfIdx].boardH || card.offsetHeight || 150;
         card.style.zIndex = '101';
         e.preventDefault();
     });
@@ -330,21 +344,43 @@ function makeBoardCardResizable(card, handle, wfIdx) {
         if (!resizing) return;
         const { scale } = getBoardTransform();
         const dx = (e.clientX - startMX) / scale;
-        // Snap width to grid and constrain min width
+        const dy = (e.clientY - startMY) / scale;
+
         let newW = Math.round((startW + dx) / GRID) * GRID;
         newW = Math.max(CARD_MIN_W, newW);
         card.style.width = newW + 'px';
+
+        let newH = Math.round((startH + dy) / GRID) * GRID;
+        newH = Math.max(100, newH); // minimum height 100px
+        card.style.height = newH + 'px';
+
+        // we adjust the inner custom-scrollbar area to fill the space
+        const listContainer = card.querySelector('.custom-scrollbar');
+        if (listContainer) {
+            // Need to remove max-h constraint when fixed size
+            listContainer.style.maxHeight = 'none';
+            // Flex grow so it takes available space in case of custom height
+            listContainer.classList.add('flex-grow');
+        }
     });
 
     document.addEventListener('mouseup', (e) => {
         if (!resizing) return;
         resizing = false;
         card.style.zIndex = '';
+
         const { scale } = getBoardTransform();
         const dx = (e.clientX - startMX) / scale;
+        const dy = (e.clientY - startMY) / scale;
+
         let newW = Math.round((startW + dx) / GRID) * GRID;
         newW = Math.max(CARD_MIN_W, newW);
         appState.masterData[wfIdx].boardW = newW;
+
+        let newH = Math.round((startH + dy) / GRID) * GRID;
+        newH = Math.max(100, newH);
+        appState.masterData[wfIdx].boardH = newH;
+
         saveData();
     });
 }
