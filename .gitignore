@@ -1,0 +1,28 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+*.log
+*.png
+*.jpg
+*.jpeg
+!sam_fg.png
+!syteline_sk.png
+!srcpskdb1.png
+!planning.png
+!plant_dropdown.png
+!from_date.png
+!to_date.png
+!run_btn.png
+!copy_btn.png
+# Except our hardcoded ones for now, though OCR replaces most. 
+# But just in case user still wants to use them.
+# Also ignore artifact error logs
+citrix_prefs_error.html
+citrix_session_settings_error.html
+error_web_login.png

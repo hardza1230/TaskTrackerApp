@@ -6,8 +6,7 @@
     <meta http-equiv="Content-Security-Policy"
         content="script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://cdnjs.cloudflare.com;">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planner Want to Go Home V.1.12</title>
-
+    <title>Planner Want to Go Home V.2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -16,145 +15,95 @@
 
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Sarabun', 'sans-serif'] },
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        },
-                        accent: {
-                            50: '#fdf4ff',
-                            100: '#fae8ff',
-                            200: '#f5d0fe',
-                            300: '#f0abfc',
-                            400: '#e879f9',
-                            500: '#d946ef',
-                            600: '#c026d3',
-                            700: '#a21caf',
-                            800: '#86198f',
-                            900: '#701a75',
-                        },
-                        brand: {
-                            start: '#0F766E', // Teal 700
-                            end: '#06B6D4',   // Cyan 500
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'water-flow': 'water-flow 3s linear infinite',
-                        'slide-up': 'slide-up 0.4s ease-out'
-                    },
-                    keyframes: {
-                        'water-flow': {
-                            '0%': { backgroundPosition: '200% 0' },
-                            '100%': { backgroundPosition: '-200% 0' }
-                        },
-                        'slide-up': {
-                            '0%': { transform: 'translateY(10px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' }
-                        }
-                    }
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['Sarabun', 'sans-serif'] } } }
         }
     </script>
 
     <style>
         body {
-            background-color: #F8FAFC;
             font-family: 'Sarabun', sans-serif;
             overflow: hidden;
             color: #1E293B;
+            background: #F1F5F9;
         }
 
-        /* Smooth Task Transitions */
-        .task-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid #E2E8F0;
-            break-inside: avoid;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-            animation: slide-up 0.4s ease-out;
-        }
-
-        .task-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        .task-item-row {
-            transition: all 0.2s ease;
-        }
-
-        .task-item-row:active {
-            transform: scale(0.98);
-        }
-
-        /* Sortable ghost class */
-        .sortable-ghost {
-            opacity: 0.4;
-            background: #F1F5F9 !important;
-            border: 2px dashed #CBD5E1 !important;
-        }
-
-        .sortable-chosen {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-        }
-
-        /* Sidebar & Utilities */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #CBD5E1;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94A3B8;
-        }
-
+        /* Sidebar */
         .sidebar-gradient {
-            background: linear-gradient(180deg, #0F766E 0%, #06B6D4 100%);
+            background: linear-gradient(180deg, #0F766E 0%, #0891B2 100%);
         }
 
+        #sidebar {
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #sidebar.collapsed {
+            width: 4.5rem;
+        }
+
+        #sidebar.collapsed .sidebar-text {
+            opacity: 0;
+            width: 0;
+            display: none;
+        }
+
+        .sidebar-icon-only {
+            min-width: 2.5rem;
+        }
+
+        /* Tab */
+        .tab-btn {
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 10px;
+            transition: all .2s;
+            color: rgba(255, 255, 255, .55);
+        }
+
+        .tab-active {
+            background: rgba(255, 255, 255, .18);
+            color: white;
+        }
+
+        /* Board grid background */
+        #board-viewport {
+            background-color: #f1f5f9;
+            background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Progress bar */
         .water-progress {
             background: linear-gradient(90deg, #0F766E, #0EA5E9, #06B6D4, #38BDF8, #0F766E);
             background-size: 200% 100%;
+            animation: water-flow 3s linear infinite;
             transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        @keyframes water-flow {
+            0% {
+                background-position: 200% 0
+            }
+
+            100% {
+                background-position: -200% 0
+            }
+        }
+
+        /* Checkbox */
         .custom-checkbox {
             appearance: none;
-            width: 1.25rem;
-            height: 1.25rem;
+            width: 1.2rem;
+            height: 1.2rem;
             border: 2px solid #CBD5E1;
-            border-radius: 6px;
+            border-radius: 5px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            transition: all .2s;
             cursor: pointer;
             flex-shrink: 0;
-            background-color: white;
+            background: white;
         }
 
         .custom-checkbox:checked {
@@ -168,219 +117,347 @@
             font-family: 'Font Awesome 6 Free';
             font-weight: 900;
             color: white;
-            font-size: 0.75rem;
+            font-size: .65rem;
         }
 
-        .masonry-grid {
-            column-count: 1;
-            column-gap: 1.5rem;
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
         }
 
-        @media (min-width: 768px) {
-            .masonry-grid {
-                column-count: 2;
-            }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 8px;
         }
 
-        @media (min-width: 1280px) {
-            .masonry-grid {
-                column-count: 3;
-            }
+        /* Focus zone */
+        #focus-zone {
+            border-top: 2px solid #E2E8F0;
+            background: #FAFAFA;
+            flex-shrink: 0;
         }
 
-        @media (min-width: 1536px) {
-            .masonry-grid {
-                column-count: 4;
-            }
+        /* Log filter active */
+        .active-filter {
+            background: rgba(255, 255, 255, .15);
+            color: #fff;
         }
 
-        #sidebar {
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Task row */
+        .task-item-row {
+            transition: background .15s;
+            border-radius: 8px;
         }
 
-        #sidebar.collapsed {
-            width: 4.5rem;
-        }
-
-        #sidebar.collapsed .sidebar-text {
-            opacity: 0;
-            width: 0;
-            display: none;
-        }
-
-        .card-header-color {
-            height: 6px;
-            width: 100%;
-        }
-
-        .glass-modal {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
+        .task-item-row:hover {
+            background: #f8fafc;
         }
     </style>
 </head>
 
 <body class="text-slate-800 h-screen flex">
 
-    <!-- Sidebar -->
+    <!-- ─── Sidebar ─────────────────────────────────────────────────────── -->
     <aside id="sidebar" class="w-72 sidebar-gradient flex flex-col shadow-2xl z-20 flex-shrink-0 relative">
         <button id="sidebar-toggle"
-            class="absolute -right-3 top-6 bg-white text-indigo-600 rounded-full w-7 h-7 shadow-md flex items-center justify-center hover:scale-110 transition-transform z-50 border border-indigo-100">
+            class="absolute -right-3 top-6 bg-white text-teal-600 rounded-full w-7 h-7 shadow-md flex items-center justify-center hover:scale-110 transition-transform z-50 border border-teal-100">
             <i class="fa-solid fa-chevron-left text-sm"></i>
         </button>
 
-        <div class="p-6 flex items-center gap-3 text-white sidebar-icon-only overflow-hidden">
+        <!-- App title -->
+        <div class="p-5 flex items-center gap-3 text-white sidebar-icon-only overflow-hidden">
             <div
-                class="min-w-[2.5rem] h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold shadow-inner flex-shrink-0">
+                class="min-w-[2.5rem] h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg flex-shrink-0">
                 <i class="fa-solid fa-house-person-return"></i>
             </div>
             <input type="text" id="app-title-input"
-                class="bg-transparent border-b border-transparent hover:border-white/30 focus:border-white outline-none text-lg font-bold text-white w-full placeholder-white/50 transition-colors sidebar-text"
+                class="bg-transparent border-b border-transparent hover:border-white/30 focus:border-white outline-none text-base font-bold text-white w-full placeholder-white/50 transition-colors sidebar-text"
                 value="Planner Home">
         </div>
 
-        <div class="flex-grow py-4 px-4 overflow-y-auto overflow-x-hidden custom-scrollbar sidebar-padding">
-            <div class="text-xs font-bold text-indigo-200 uppercase tracking-wider mb-3 px-1 sidebar-text">Shortcuts
-            </div>
-            <div id="shortcuts-container" class="space-y-2"></div>
+        <!-- Tab switcher: Shortcuts / Automate -->
+        <div class="px-4 pb-2 flex gap-1 sidebar-text">
+            <button id="tab-shortcuts-btn" class="tab-btn tab-active flex items-center gap-1">
+                <i class="fa-solid fa-link text-[10px]"></i> Shortcuts
+            </button>
+            <button id="tab-automate-btn" class="tab-btn flex items-center gap-1">
+                <i class="fa-brands fa-python text-[10px]"></i> Automate
+            </button>
+        </div>
 
+        <!-- SHORTCUTS PANEL -->
+        <div id="shortcuts-panel" class="flex-grow py-2 px-3 overflow-y-auto custom-scrollbar flex flex-col gap-1">
+            <div id="shortcuts-container" class="flex flex-col gap-1"></div>
             <button id="add-shortcut-btn"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-cyan-100 border border-white/10 hover:bg-white/10 transition-colors mt-4 group sidebar-icon-only">
-                <i class="fa-solid fa-plus text-sm group-hover:scale-110 transition-transform flex-shrink-0"></i>
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-cyan-100 border border-white/10 hover:bg-white/10 transition-colors mt-2 group sidebar-icon-only">
+                <i class="fa-solid fa-plus text-xs flex-shrink-0"></i>
                 <span class="text-sm font-medium sidebar-text">Add Shortcut</span>
             </button>
 
-            <div class="mt-8 border-t border-white/10 pt-4 sidebar-padding sidebar-text">
-                <div class="text-xs font-bold text-teal-200 uppercase tracking-wider mb-2"><i
-                        class="fa-solid fa-pen-nib mr-1"></i> Scratchpad</div>
+            <!-- Bot Log button -->
+            <button id="log-nav-btn" onclick="window.showLogPage()"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-orange-200 border border-white/10 hover:bg-white/10 transition-colors mt-1 group sidebar-icon-only">
+                <i class="fa-solid fa-terminal text-xs flex-shrink-0"></i>
+                <span class="text-sm font-medium sidebar-text">Bot Log</span>
+                <span id="log-badge"
+                    class="hidden w-2 h-2 bg-orange-400 rounded-full animate-pulse ml-auto flex-shrink-0"></span>
+            </button>
+
+            <!-- Scratchpad -->
+            <div class="mt-4 border-t border-white/10 pt-3 sidebar-text">
+                <div class="text-[10px] font-bold text-teal-200 uppercase tracking-wider mb-1.5"><i
+                        class="fa-solid fa-pen-nib mr-1"></i>Scratchpad</div>
                 <textarea id="scratchpad-input"
-                    class="w-full h-32 bg-black/10 border border-white/10 hover:border-white/30 rounded-xl p-3 text-sm text-teal-50 placeholder-teal-200/50 resize-none focus:outline-none focus:bg-black/20 focus:border-cyan-300 transition-colors custom-scrollbar"
-                    placeholder="Type quick notes here..."></textarea>
+                    class="w-full h-28 bg-black/10 border border-white/10 hover:border-white/30 rounded-xl p-2.5 text-sm text-teal-50 placeholder-teal-200/50 resize-none focus:outline-none focus:bg-black/20 focus:border-cyan-300 transition-colors custom-scrollbar"
+                    placeholder="Quick notes..."></textarea>
             </div>
         </div>
 
-        <div class="p-4 border-t border-white/10 bg-black/10 space-y-3 sidebar-padding">
-            <div class="flex gap-2 sidebar-text">
-                <button id="import-template-btn"
-                    class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20"
+        <!-- AUTOMATE PANEL -->
+        <div id="automate-panel"
+            class="hidden flex-grow py-2 px-3 overflow-y-auto custom-scrollbar flex flex-col gap-1">
+            <div class="text-[10px] font-bold text-orange-200 uppercase tracking-wider px-1 mb-1">Python Scripts</div>
+            <div id="automate-container" class="flex flex-col gap-1"></div>
+            <button id="add-automate-btn"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-orange-100 border border-white/10 hover:bg-white/10 transition-colors mt-2 group sidebar-icon-only">
+                <i class="fa-solid fa-plus text-xs flex-shrink-0"></i>
+                <span class="text-sm font-medium sidebar-text">Add Script</span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-3 border-t border-white/10 bg-black/10 space-y-2 sidebar-text">
+            <div class="flex gap-2">
+                <button id="import-btn"
+                    class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all text-xs border border-transparent hover:border-white/20"
                     title="Import JSON">
-                    <i class="fa-solid fa-file-import text-sm"></i> <span class="text-sm">Import</span>
+                    <i class="fa-solid fa-file-import text-xs"></i>
+                    <span class="sidebar-text">Import</span>
                 </button>
-                <button id="export-template-btn"
-                    class="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all border border-transparent hover:border-white/20"
+                <button id="export-btn"
+                    class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-indigo-100 hover:text-white hover:bg-white/10 rounded-lg transition-all text-xs border border-transparent hover:border-white/20"
                     title="Export JSON">
-                    <i class="fa-solid fa-file-export text-sm"></i> <span class="text-sm">Export</span>
+                    <i class="fa-solid fa-file-export text-xs"></i>
+                    <span class="sidebar-text">Export</span>
                 </button>
             </div>
             <button id="reset-day-btn"
-                class="w-full flex items-center gap-3 px-3 py-2 text-red-200 hover:text-white hover:bg-red-500/20 rounded-lg transition-all sidebar-icon-only"
+                class="w-full flex items-center gap-2 px-3 py-2 text-red-200 hover:text-white hover:bg-red-500/20 rounded-lg transition-all sidebar-icon-only text-xs"
                 title="Factory Reset">
-                <i class="fa-solid fa-power-off w-5 text-center text-sm flex-shrink-0"></i>
-                <span class="text-sm sidebar-text">Reset Data</span>
+                <i class="fa-solid fa-power-off w-5 text-center flex-shrink-0"></i>
+                <span class="sidebar-text">Reset Data</span>
             </button>
         </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- ─── Main ─────────────────────────────────────────────────────────── -->
     <main class="flex-grow flex flex-col h-screen overflow-hidden bg-[#F3F4F6] relative">
 
         <!-- Header -->
-        <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 z-10 sticky top-0 shadow-sm">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-6 w-full md:w-auto">
+        <header
+            class="bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 py-3 z-10 sticky top-0 shadow-sm flex-shrink-0">
+            <div class="flex justify-between items-center gap-4">
+                <!-- Left: title + progress -->
+                <div class="flex items-center gap-5">
                     <div>
                         <h2
-                            class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-cyan-500">
-                            Daily Plan
-                        </h2>
-                        <span id="clock-display" class="text-sm font-bold text-gray-400 font-mono">--:--:--</span>
+                            class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-cyan-500">
+                            Daily Plan</h2>
+                        <span id="clock-display" class="text-xs font-bold text-gray-400 font-mono">--:--:--</span>
                     </div>
-                    <div class="h-10 w-px bg-gray-200 hidden md:block"></div>
-                    <div class="flex flex-col justify-center">
-                        <div class="flex items-end gap-3">
-                            <span id="progress-percent" class="text-3xl font-bold text-teal-600 leading-none">0%</span>
-                            <span id="progress-count" class="text-sm font-medium text-gray-500 mb-1">0/0 Tasks</span>
+                    <div class="h-8 w-px bg-gray-200 hidden md:block"></div>
+                    <div class="flex flex-col justify-center hidden md:flex">
+                        <div class="flex items-end gap-2">
+                            <span id="progress-percent" class="text-2xl font-bold text-teal-600 leading-none">0%</span>
+                            <span id="progress-count" class="text-xs font-medium text-gray-500 mb-0.5">0/0 Tasks</span>
                         </div>
-                        <div class="w-48 h-2.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden shadow-inner">
-                            <div id="overall-progress-bar" class="h-full water-progress animate-water-flow"
-                                style="width: 0%"></div>
+                        <div class="w-36 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden shadow-inner">
+                            <div id="overall-progress-bar" class="h-full water-progress" style="width:0%"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4 ml-auto">
-                    <button id="edit-mode-btn"
-                        class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl shadow-sm transition-all text-sm font-bold flex items-center gap-2 h-10">
-                        <i class="fa-solid fa-pen-to-square"></i> <span class="hidden sm:inline">Edit Mode</span>
-                    </button>
-
-                    <div class="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-200 h-10">
-                        <button id="today-btn"
-                            class="px-4 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm font-bold text-sm hover:text-indigo-800 transition-colors mr-2">Today</button>
-                        <input type="date" id="date-picker"
-                            class="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer font-medium">
+                <!-- Center: Search -->
+                <div class="flex items-center gap-2 relative">
+                    <div class="relative group">
+                        <i
+                            class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs group-focus-within:text-teal-500 transition-colors"></i>
+                        <input type="text" id="global-search-input" placeholder="Search (Ctrl+F)" autocomplete="off"
+                            class="pl-9 pr-8 py-1.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-teal-400 outline-none bg-white text-gray-700 shadow-sm w-48 focus:w-64 transition-all placeholder:text-gray-400">
+                        <button id="clear-search-btn"
+                            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 hidden">
+                            <i class="fa-solid fa-times text-[10px]"></i>
+                        </button>
                     </div>
+                </div>
+
+                <!-- Right: Zoom + Edit -->
+                <div class="flex items-center gap-2">
+                    <!-- Board zoom controls -->
+                    <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+                        <button onclick="window.zoomBoard(0.12)"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:bg-white hover:shadow-sm transition-all"
+                            title="Zoom In">
+                            <i class="fa-solid fa-magnifying-glass-plus text-xs"></i>
+                        </button>
+                        <span id="board-zoom-label"
+                            class="text-xs font-bold text-slate-600 min-w-[2.5rem] text-center">100%</span>
+                        <button onclick="window.zoomBoard(-0.12)"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-600 hover:bg-white hover:shadow-sm transition-all"
+                            title="Zoom Out">
+                            <i class="fa-solid fa-magnifying-glass-minus text-xs"></i>
+                        </button>
+                        <button onclick="window.resetBoardZoom()"
+                            class="h-7 px-2 text-xs font-bold text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
+                            title="Reset">
+                            Reset
+                        </button>
+                    </div>
+                    <button id="edit-mode-btn"
+                        class="bg-white border border-indigo-100 text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl shadow-sm text-sm font-bold flex items-center gap-2 h-9 transition-all">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span class="hidden sm:inline">Edit Mode</span>
+                    </button>
                 </div>
             </div>
         </header>
 
-        <!-- Content Area -->
-        <div id="scroll-container" class="flex-grow overflow-y-auto p-6 custom-scrollbar">
-            <div id="task-grid" class="masonry-grid pb-24">
-                <!-- Cards injected here -->
+        <!-- Board+Focus wrapper (hidden when Log page is open) -->
+        <div id="board-and-focus-wrapper" class="flex flex-col flex-grow overflow-hidden">
+
+            <!-- Board Viewport -->
+            <div id="board-viewport" class="flex-grow relative overflow-hidden">
+                <!-- Hint tip -->
+                <div
+                    class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 text-[10px] text-slate-400 bg-white/80 backdrop-blur px-3 py-1 rounded-full border border-slate-200 pointer-events-none select-none">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i>ลาก Card เพื่อย้าย &nbsp;·&nbsp; Scroll เพื่อ Zoom
+                    &nbsp;·&nbsp; ลากพื้นว่างเพื่อ Pan
+                </div>
+                <!-- Pan container (cards injected here) -->
+                <div id="board-pan-container" class="absolute inset-0 origin-top-left" style="will-change:transform;">
+                </div>
+                <!-- FAB: Add workflow (edit mode only) -->
+                <button id="add-workflow-fab"
+                    class="hidden absolute bottom-6 right-6 z-20 w-14 h-14 bg-gradient-to-tr from-teal-600 to-cyan-500 text-white rounded-2xl shadow-xl shadow-teal-500/30 items-center justify-center hover:scale-110 active:scale-95 transition-all text-xl"
+                    onclick="window.addWorkflow()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
             </div>
+
+            <!-- Focus Zone (hidden until card expanded) -->
+            <div id="focus-zone" class="hidden h-56 flex flex-col overflow-hidden">
+                <!-- Content injected by ui.js updateFocusZone() -->
+            </div>
+
         </div>
 
-        <!-- Bot Log Panel (Sliding) -->
-        <div id="log-panel"
-            class="fixed bottom-0 right-8 w-80 bg-slate-900 text-slate-300 rounded-t-2xl shadow-2xl transform translate-y-full transition-transform duration-500 z-40 border border-slate-700 border-b-0">
-            <div class="px-4 py-3 border-b border-slate-700 flex justify-between items-center cursor-pointer"
-                onclick="toggleLogPanel()">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-terminal text-teal-400 text-xs shadow-sm"></i>
-                    <span class="text-xs font-bold uppercase tracking-widest text-slate-200">Bot Output</span>
-                    <span id="log-badge" class="hidden w-2 h-2 bg-teal-500 rounded-full animate-pulse"></span>
+        <!-- Log Page (replaces board when active) -->
+        <div id="log-page" class="hidden flex-col h-full overflow-hidden">
+            <!-- Header -->
+            <div class="bg-slate-900 text-white px-6 py-3 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.showLogPage('back')"
+                        class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-arrow-left text-sm"></i>
+                    </button>
+                    <i class="fa-solid fa-terminal text-teal-400"></i>
+                    <h2 class="text-base font-bold">Bot Output Log</h2>
+                    <span id="log-count-badge"
+                        class="text-xs bg-teal-500/20 text-teal-400 px-2 py-0.5 rounded-full font-mono">0 entries</span>
                 </div>
-                <i id="log-chevron" class="fa-solid fa-chevron-up text-xs text-slate-500"></i>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.copyLog()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-colors">
+                        <i class="fa-regular fa-copy"></i> Copy All
+                    </button>
+                    <button onclick="window.clearLog()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-300 rounded-lg text-xs font-bold transition-colors">
+                        <i class="fa-solid fa-trash"></i> Clear
+                    </button>
+                </div>
             </div>
+            <!-- Filters -->
+            <div class="bg-slate-800 px-6 py-2 flex items-center gap-2.5 flex-shrink-0 border-b border-slate-700">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Filter:</span>
+                <button onclick="window.filterLog('all')" id="filter-all"
+                    class="log-filter-btn active-filter px-2.5 py-1 rounded-lg text-xs font-bold">All</button>
+                <button onclick="window.filterLog('info')" id="filter-info"
+                    class="log-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white">Info</button>
+                <button onclick="window.filterLog('success')" id="filter-success"
+                    class="log-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold text-teal-400 hover:text-teal-200">Success</button>
+                <button onclick="window.filterLog('error')" id="filter-error"
+                    class="log-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold text-red-400 hover:text-red-200">Error</button>
+                <button onclick="window.filterLog('warn')" id="filter-warn"
+                    class="log-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold text-orange-400 hover:text-orange-200">Warn</button>
+            </div>
+            <!-- Entries -->
             <div id="log-content"
-                class="h-48 overflow-y-auto p-4 font-mono text-[10px] space-y-1.5 custom-scrollbar bg-slate-950/50">
-                <div class="text-slate-500 italic">Ready for automation logs...</div>
+                class="flex-grow overflow-y-auto p-6 font-mono text-sm space-y-1 custom-scrollbar bg-slate-950 text-slate-400">
+                <div class="text-slate-600 italic">Ready for automation logs...</div>
             </div>
         </div>
 
         <!-- Toast -->
         <div id="toast"
-            class="fixed bottom-8 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 transition-all duration-500 z-50 pointer-events-none">
+            class="fixed bottom-6 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 transition-all duration-500 z-50 pointer-events-none">
             <div
-                class="bg-white/95 backdrop-blur-md border border-slate-100 shadow-2xl px-6 py-4 rounded-2xl flex items-center gap-4 min-w-[320px]">
+                class="bg-white/95 backdrop-blur-md border border-slate-100 shadow-2xl px-5 py-3 rounded-2xl flex items-center gap-3 min-w-[280px]">
                 <div id="toast-icon-container"
-                    class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                    <i id="toast-icon" class="fa-solid fa-info-circle text-indigo-500 text-xl"></i>
+                    class="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                    <i id="toast-icon" class="fa-solid fa-info-circle text-indigo-500 text-lg"></i>
                 </div>
-                <div class="flex-grow">
-                    <p id="toast-message" class="text-sm font-bold text-slate-800 leading-tight">Notification</p>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">System Notification</p>
+                <p id="toast-message" class="text-sm font-bold text-slate-800 leading-tight">Notification</p>
+            </div>
+        </div>
+
+        <!-- Automation Modal -->
+        <div id="automation-modal"
+            class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+                <div class="bg-gradient-to-r from-teal-600 to-cyan-500 px-6 py-5 text-white">
+                    <h3 id="automation-title" class="text-lg font-bold">Running...</h3>
+                    <p id="automation-subtitle" class="text-sm text-teal-100 mt-0.5"></p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div id="automation-progress" class="h-full water-progress transition-all duration-500"
+                            style="width:0%"></div>
+                    </div>
+                    <div id="automation-step" class="text-sm text-slate-600 font-medium"></div>
+                    <div id="automation-log"
+                        class="bg-slate-50 rounded-xl p-3 h-32 overflow-y-auto font-mono text-xs text-slate-500 space-y-1 custom-scrollbar">
+                    </div>
+                </div>
+                <div class="px-6 pb-5 flex justify-end gap-3">
+                    <button onclick="window.hideAutomationModal()"
+                        class="px-5 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors">Close</button>
                 </div>
             </div>
         </div>
 
-        <!-- FAB Group (Visible in Edit Mode) -->
-        <div class="fixed bottom-8 right-8 flex flex-col gap-4 z-30">
-            <button id="add-workflow-fab"
-                class="hidden w-16 h-16 bg-gradient-to-tr from-teal-600 to-cyan-500 text-white rounded-2xl shadow-lg shadow-teal-500/30 items-center justify-center hover:scale-110 active:scale-95 transition-all text-xl group">
-                <i class="fa-solid fa-plus"></i>
-                <span
-                    class="absolute right-full mr-4 px-3 py-1 bg-slate-800 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase font-bold tracking-widest">Add
-                    New Category</span>
-            </button>
+        <!-- Excel Toast Modal -->
+        <div id="excel-toast-modal"
+            class="hidden fixed bottom-6 right-6 z-50 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden w-72">
+            <div class="bg-gradient-to-r from-green-600 to-emerald-500 px-4 py-2 flex items-center gap-3">
+                <div class="relative flex-shrink-0">
+                    <div id="excel-toast-spinner"
+                        class="w-6 h-6 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                    <i id="excel-toast-icon"
+                        class="fa-solid fa-table-cells hidden absolute inset-0 flex items-center justify-center text-white text-xs"></i>
+                </div>
+                <div class="flex-grow">
+                    <p id="excel-toast-title" class="text-xs font-bold text-white">Excel Refresh</p>
+                    <p id="excel-toast-msg" class="text-[10px] text-green-100">กำลัง refresh...</p>
+                </div>
+                <button onclick="window.hideExcelToast?.()" class="text-white/70 hover:text-white text-xs">✕</button>
+            </div>
         </div>
 
     </main>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json">
-
-    <script src="renderer.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 
 </html>

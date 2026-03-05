@@ -30,38 +30,81 @@ app.whenReady().then(() => {
     }
   });
 
-  // ฟังก์ชันสั่งรันสคริปต์ Python
-  ipcMain.handle('run-python', async (event, filePath) => {
-    return new Promise((resolve) => {
-      // Use spawn for potential future streaming, though here we still wait for completion
-      const { spawn } = require('child_process');
-      const process = spawn('python', [filePath], { cwd: path.dirname(filePath) });
-
-      let stdout = '';
-      let stderr = '';
-
-      process.stdout.on('data', (data) => {
-        stdout += data.toString();
-        event.sender.send('python-log', data.toString());
-      });
-
-      process.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      process.on('close', (code) => {
-        if (code !== 0) {
-          resolve({ success: false, error: stderr || `Process exited with code ${code}` });
-        } else {
-          resolve({ success: true, output: stdout });
-        }
-      });
-
-      process.on('error', (err) => {
-        resolve({ success: false, error: err.message });
-      });
+  // ฟังก์ชันเปิดหน้าต่างเลือกไฟล์
+  ipcMain.handle('dialog-choose-file', async () => {
+    const { dialog } = require('electron');
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [
+        { name: 'All Supported Files', extensions: ['py', 'xlsx', 'xlsm', 'xls', 'exe', 'bat', 'ps1'] },
+        { name: 'Python Scripts', extensions: ['py'] },
+        { name: 'Excel Files', extensions: ['xlsx', 'xlsm', 'xls'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
     });
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
   });
+
+  // ฟังก์ชันสั่งรันสคริปต์ Python (python → py → python3)
+  ipcMain.handle('run-python', async (event, filePath) => {
+    // shell:true ทำให้ ENOENT ไม่ถูก emit → ตรวจ stderr "not recognized" แทน
+    const launchers = ['python', 'py', 'python3'];
+
+    function tryLauncher(index) {
+      return new Promise((resolve) => {
+        if (index >= launchers.length) {
+          resolve({ success: false, error: 'ไม่พบ Python บนระบบ กรุณาติดตั้งจาก python.org' });
+          return;
+        }
+        const launcher = launchers[index];
+        const { spawn } = require('child_process');
+        const child = spawn(launcher, [filePath], { cwd: path.dirname(filePath), shell: true });
+
+        let stdout = '', stderr = '';
+
+        child.stdout.on('data', (data) => {
+          stdout += data.toString();
+          event.sender.send('python-log', data.toString());
+        });
+        child.stderr.on('data', (data) => { stderr += data.toString(); });
+
+        child.on('close', (code) => {
+          const notFound = stderr.toLowerCase().includes('not recognized') ||
+            stderr.toLowerCase().includes('cannot find') ||
+            stderr.toLowerCase().includes('no such file');
+          if (code !== 0 && notFound) {
+            // launcher นี้ไม่มีในระบบ → ลองถัดไปโดยไม่ log error
+            event.sender.send('python-log', `[INFO] ${launcher} ไม่พบ → ลอง ${launchers[index + 1] || '(ไม่มีตัวสำรอง)'}...`);
+            tryLauncher(index + 1).then(resolve);
+            return;
+          }
+          // launcher พบแล้ว → emit stderr ตามจริง
+          if (stderr) event.sender.send('python-log', `[ERR] ${stderr}`);
+
+          if (code !== 0) {
+            let errorMsg = stderr || `Process exited with code ${code}`;
+            if (errorMsg.includes('playwright')) {
+              errorMsg += "\n💡 ติดตั้ง: pip install playwright && playwright install";
+            }
+            resolve({ success: false, error: errorMsg });
+          } else {
+            resolve({ success: true, output: stdout });
+          }
+        });
+
+        child.on('error', (err) => {
+          event.sender.send('python-log', `[INFO] ${launcher} → ${err.code} → ลองถัดไป`);
+          tryLauncher(index + 1).then(resolve);
+        });
+      });
+    }
+
+    return tryLauncher(0);
+  });
+
 
   // ฟังก์ชันพิเศษสำหรับเปิด Excel + Refresh + Save
   ipcMain.handle('refresh-excel', async (event, filePath) => {
@@ -76,13 +119,14 @@ try {
     $excel.Visible = $true
     $excel.DisplayAlerts = $false
     $workbook = $excel.Workbooks.Open($filePath)
-    $workbook.RefreshAll()
-    # Wait for background refreshes
+      $workbook.RefreshAll()
+    # Wait for background refreshes — fix: separate pipeline from -and condition
     $count = 0
-    while ($workbook.Queries | Where-Object { $_.Refreshing } -and $count -lt 60) {
+    do {
         Start-Sleep -Seconds 1
         $count++
-    }
+        $stillRefreshing = @($workbook.Queries | Where-Object { $_.Refreshing }).Count
+    } while ($stillRefreshing -gt 0 -and $count -lt 60)
     Start-Sleep -Seconds 2
     $workbook.Save()
     $workbook.Close()
@@ -90,7 +134,7 @@ try {
     [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null
     Write-Output "SUCCESS"
 } catch {
-    Write-Error $_.Exception.Message
+    Write-Output "ERROR: $($_.Exception.Message)"
     if ($excel) {
         $excel.Quit()
         [System.Runtime.Interopservices.Marshal]::ReleaseComObject($excel) | Out-Null

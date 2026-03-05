@@ -12,5 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onPythonLog: (callback) => {
     ipcRenderer.on('python-log', (event, data) => callback(data));
+  },
+  dialogChooseFile: async () => {
+    return await ipcRenderer.invoke('dialog-choose-file');
   }
 });

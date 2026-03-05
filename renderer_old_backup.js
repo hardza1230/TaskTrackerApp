@@ -46,6 +46,9 @@ function init() {
     if (window.electronAPI.onPythonLog) {
         window.electronAPI.onPythonLog((data) => {
             logBot(data.trim(), 'info');
+            if (!document.getElementById('automation-modal').classList.contains('hidden')) {
+                logToModal(data.trim(), 'info');
+            }
         });
     }
 }
@@ -222,30 +225,51 @@ function renderTasks() {
                     `;
                 });
 
-                const isExcel = task.link && task.link.toLowerCase().match(/\.(xlsx|xlsm|xls)$/);
                 let excelToggle = '';
                 if (isExcel) {
                     excelToggle = `
-                        <label class="flex items-center gap-2 mt-2 cursor-pointer">
+                        <label class="flex items-center gap-2 mt-2 cursor-pointer w-fit">
                             <input type="checkbox" ${task.refreshExcel ? 'checked' : ''} onchange="updateTask(${wfIdx}, ${tIdx}, 'refreshExcel', this.checked)" class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
-                            <span class="text-xs font-bold text-gray-500">Show Refresh Excel Button</span>
+                            <span class="text-xs font-bold text-gray-500">Auto Refresh Excel</span>
                         </label>
                     `;
                 }
 
+                const isPython = task.link && task.link.toLowerCase().endsWith('.py');
+                const pyIndicator = isPython ? `<span class="px-2 py-0.5 bg-orange-100 text-orange-600 rounded text-[10px] font-bold tracking-wider ml-2 flex-shrink-0"><i class="fa-brands fa-python mr-1"></i>PYTHON</span>` : '';
+
                 taskList += `
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 shadow-sm">
-                        <div class="flex gap-2 mb-2 items-center">
-                            <button onclick="toggleFavorite(${wfIdx}, ${tIdx})" class="${isFav ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'} transition-colors"><i class="fa-solid fa-star"></i></button>
-                            <input type="text" value="${task.name}" class="text-sm w-full font-medium bg-white border border-gray-200 rounded p-1.5 focus:ring-2 focus:ring-teal-500 focus:outline-none" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
-                            <input type="text" value="${task.time || ''}" class="text-xs w-16 bg-white border border-gray-200 rounded p-1.5 text-center placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="15m" onchange="updateTask(${wfIdx}, ${tIdx}, 'time', this.value)">
-                            <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-red-400 hover:text-red-600 p-1 bg-white border border-gray-200 rounded px-2"><i class="fa-solid fa-trash text-sm"></i></button>
+                    <div class="bg-white p-4 rounded-xl border border-indigo-100/50 mb-3 shadow-sm hover:shadow-md transition-shadow relative group">
+                        <!-- Top Row: Name, Time, Actions -->
+                        <div class="flex gap-3 mb-3 items-center">
+                            <button onclick="toggleFavorite(${wfIdx}, ${tIdx})" class="${isFav ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'} transition-colors" title="Favorite"><i class="fa-solid fa-star"></i></button>
+                            <div class="flex-grow flex items-center">
+                                <i class="fa-tasks fa-solid text-slate-300 text-xs mr-2"></i>
+                                <input type="text" value="${task.name}" class="text-sm w-full font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 focus:outline-none focus:bg-white transition-colors" placeholder="Task Name" onchange="updateTask(${wfIdx}, ${tIdx}, 'name', this.value)">
+                            </div>
+                            <div class="w-24">
+                                <input type="text" value="${task.time || ''}" class="text-xs w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-center placeholder-slate-400 focus:ring-2 focus:ring-teal-500 focus:outline-none focus:bg-white transition-colors" placeholder="Time (e.g. 5m)" onchange="updateTask(${wfIdx}, ${tIdx}, 'time', this.value)">
+                            </div>
+                            <button onclick="removeTask(${wfIdx}, ${tIdx})" class="text-slate-400 hover:text-red-500 font-bold p-2 bg-slate-50 border border-slate-200 rounded-lg hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete Task"><i class="fa-solid fa-trash text-sm"></i></button>
                         </div>
-                        <input type="text" value="${task.link || ''}" class="text-xs w-full bg-white border border-gray-200 rounded p-1.5 text-gray-500 focus:ring-2 focus:ring-teal-500 focus:outline-none mb-1" placeholder="Launch Path/URL..." onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
                         
-                        ${excelToggle}
-                        ${subtasksHtml}
-                        <button onclick="addSubtask(${wfIdx}, ${tIdx})" class="text-xs text-teal-600 font-bold mt-2 ml-6 hover:underline">+ Add Sub-task</button>
+                        <!-- Middle Row: Path Selection -->
+                        <div class="bg-slate-50 rounded-lg p-3 border border-slate-200/60 flex flex-col gap-2">
+                            <div class="flex items-center text-xs font-bold text-slate-500">
+                                <i class="fa-solid fa-link mr-1.5"></i> Execution Path / Link ${pyIndicator}
+                            </div>
+                            <div class="flex gap-2 w-full">
+                                <input type="text" value="${task.link || ''}" class="text-xs flex-grow bg-white border border-slate-200 rounded-lg p-2 text-slate-600 focus:ring-2 focus:ring-teal-500 focus:outline-none transition-colors" placeholder="Select a script (.py, .exe, .bat) or Excel file..." onchange="updateTask(${wfIdx}, ${tIdx}, 'link', this.value)">
+                                <button onclick="browseFilePath(${wfIdx}, ${tIdx})" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 font-bold text-xs rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors hover:border-transparent whitespace-nowrap shadow-sm"><i class="fa-solid fa-folder-open mr-1"></i> Browse</button>
+                            </div>
+                            ${excelToggle}
+                        </div>
+                        
+                        <!-- Bottom Area: Subtasks -->
+                        <div class="mt-3">
+                            ${subtasksHtml}
+                            <button onclick="addSubtask(${wfIdx}, ${tIdx})" class="text-xs text-indigo-500 font-bold mt-2 ml-6 hover:text-indigo-700 transition-colors flex items-center gap-1"><i class="fa-solid fa-plus bg-indigo-50 p-1 rounded"></i> Add Sub-task</button>
+                        </div>
                     </div>
                 `;
             } else {
@@ -351,13 +375,16 @@ function updateEditModeUI() {
     }
 }
 
-async function openLinkWithConfig(wfIdx, tIdx) {
+async function openLinkWithConfig(wfIdx, tIdx, skipModal = false) {
     const task = appState.masterData[wfIdx].tasks[tIdx];
     const path = task.link;
 
     if (path.toLowerCase().endsWith('.py')) {
+        if (!skipModal) showAutomationModal(`Running Python`, `${task.name}`, 0, false);
         showToast(`💡 กำลังรันสคริปต์: ${task.name}...`, 'info');
         logBot(`เริ่มต้นรันสคริปต์ Python: ${task.name}`, 'info');
+        if (!skipModal) logToModal(`Starting script...`, 'info');
+
         const btnIcon = document.getElementById(`btn-open-${wfIdx}-${tIdx}`);
         if (btnIcon) {
             btnIcon.classList.remove('fa-rocket');
@@ -370,13 +397,29 @@ async function openLinkWithConfig(wfIdx, tIdx) {
                 showToast(`✅ สั่งงานเรียบร้อย: ${task.name}`, 'success');
                 logBot(`✅ สคริปต์ ${task.name} ทำงานเสร็จสิ้น`, 'success');
                 if (res.output) logBot(`Output: ${res.output.trim()}`, 'info');
+                if (!skipModal) completeAutomationModal(`Finished: ${task.name}`);
+
+                // Set task as done
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                appState.progress[`${wfIdx}_${tIdx}`] = timeStr;
+                saveProgress();
+                renderTasks();
             } else {
                 showToast(`❌ ข้อผิดพลาด: ${res.error}`, 'error');
                 logBot(`❌ ข้อผิดพลาดใน ${task.name}: ${res.error}`, 'error');
+                if (!skipModal) {
+                    logToModal(`Error: ${res.error}`, 'error');
+                    hideAutomationModal();
+                }
             }
         } catch (e) {
             showToast(`❌ Exception: ${e.message}`, 'error');
             logBot(`❌ Exception ใน ${task.name}: ${e.message}`, 'error');
+            if (!skipModal) {
+                logToModal(`Exception: ${e.message}`, 'error');
+                hideAutomationModal();
+            }
         }
 
         if (btnIcon) {
@@ -386,15 +429,25 @@ async function openLinkWithConfig(wfIdx, tIdx) {
     } else {
         logBot(`เปิดไฟล์/ลิงก์: ${task.name}`, 'info');
         window.electronAPI.openFile(path);
+
+        // Auto mark as done for simple links
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        appState.progress[`${wfIdx}_${tIdx}`] = timeStr;
+        saveProgress();
+        renderTasks();
     }
 }
 
-async function refreshExcelData(wfIdx, tIdx) {
+async function refreshExcelData(wfIdx, tIdx, skipModal = false) {
     const task = appState.masterData[wfIdx].tasks[tIdx];
     if (!task.link) return;
 
+    if (!skipModal) showAutomationModal(`Refreshing Excel`, `Opening ${task.name}...`, 0, false);
     showToast(`📊 กำลังเปิดและรีเฟรช Excel: ${task.name}...`, 'info');
     logBot(`กำลังเปิด Excel และ Refresh: ${task.name}`, 'info');
+    if (!skipModal) logToModal('Launching Excel in background...', 'info');
+
     const btnIcon = document.getElementById(`btn-refresh-${wfIdx}-${tIdx}`);
     if (btnIcon) {
         btnIcon.classList.remove('fa-arrows-rotate');
@@ -406,6 +459,8 @@ async function refreshExcelData(wfIdx, tIdx) {
         if (res.success) {
             showToast(`✅ รีเฟรชและเซฟสำเร็จ: ${task.name}`, 'success');
             logBot(`✅ รีเฟรช Excel สำเร็จ: ${task.name}`, 'success');
+            if (!skipModal) completeAutomationModal('Excel Refreshed!');
+
             const now = new Date();
             const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             appState.progress[`${wfIdx}_${tIdx}`] = timeStr;
@@ -414,10 +469,18 @@ async function refreshExcelData(wfIdx, tIdx) {
         } else {
             showToast(`❌ รีเฟรชไม่สำเร็จ: ${res.error}`, 'error');
             logBot(`❌ รีเฟรช Excel ล้มเหลว: ${task.name} (${res.error})`, 'error');
+            if (!skipModal) {
+                logToModal(`Error: ${res.error}`, 'error');
+                hideAutomationModal();
+            }
         }
     } catch (e) {
         showToast(`❌ Error: ${e.message}`, 'error');
         logBot(`❌ Error ในการรีเฟรช: ${task.name} (${e.message})`, 'error');
+        if (!skipModal) {
+            logToModal(`Exception: ${e.message}`, 'error');
+            hideAutomationModal();
+        }
     }
 
     if (btnIcon) {
@@ -556,16 +619,32 @@ function toggleCollapse(wfIdx) {
 
 async function runMacro(wfIdx) {
     const tasks = appState.masterData[wfIdx].tasks.filter(t => t.link);
+    if (tasks.length === 0) return;
+
     const btn = document.getElementById(`macro-btn-${wfIdx}`);
     if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Launching...';
 
+    showAutomationModal(`Running Macro: ${appState.masterData[wfIdx].title}`, `Automating ${tasks.length} tasks...`, tasks.length, true);
     showToast(`🚀 กำลังรัน ${tasks.length} รายการอัตโนมัติ...`, 'info');
+
     for (const t of tasks) {
         const tIdx = appState.masterData[wfIdx].tasks.indexOf(t);
-        openLinkWithConfig(wfIdx, tIdx);
+        updateAutomationStep(`Executing: ${t.name}`);
+        logToModal(`Starting task: ${t.name}...`, 'info');
+
+        // Check if it's an Excel file that needs refresh prior to open, or just Python/File
+        const isExcel = t.link.toLowerCase().match(/\.(xlsx|xlsm|xls)$/);
+        if (isExcel && t.refreshExcel) {
+            await refreshExcelData(wfIdx, tIdx, true); // skip modal override
+        } else {
+            await openLinkWithConfig(wfIdx, tIdx, true); // skip modal override
+        }
+
+        updateAutomationProgress();
         await new Promise(r => setTimeout(r, 1200));
     }
 
+    completeAutomationModal('All macro tasks completed!');
     if (btn) btn.innerHTML = '<i class="fa-solid fa-rocket mr-2"></i> Launch All';
 }
 
@@ -656,6 +735,116 @@ function startClock() {
     }, 1000);
 }
 
+// --- Automation Modal Controller ---
+let modalCurrentStep = 0;
+let modalTotalSteps = 0;
+
+function showAutomationModal(title, subtitle = 'Please wait...', totalSteps = 0, isMacro = false) {
+    const modal = document.getElementById('automation-modal');
+    modal.classList.remove('hidden');
+    // Force reflow
+    void modal.offsetWidth;
+    modal.classList.remove('opacity-0');
+    document.getElementById('automation-modal-content').classList.remove('scale-95');
+
+    document.getElementById('automation-modal-title').innerText = title;
+    document.getElementById('automation-modal-subtitle').innerText = subtitle;
+
+    document.getElementById('automation-icon-container').classList.add('animate-pulse');
+    const icon = document.getElementById('automation-modal-icon');
+    const spinner = document.getElementById('automation-spinner');
+
+    icon.classList.remove('fa-check-circle', 'text-green-500');
+    // We can swap the main icon depending on macro vs single if wanted, but keep it a rocket or gear for now
+    if (isMacro) {
+        icon.className = 'fa-solid fa-layer-group text-teal-500 text-xl';
+    } else {
+        icon.className = 'fa-solid fa-rocket text-teal-500 text-xl';
+    }
+    spinner.classList.remove('hidden');
+
+    document.getElementById('automation-mini-log').innerHTML = '';
+    document.getElementById('automation-close-btn').classList.remove('hidden');
+
+    modalTotalSteps = totalSteps;
+    modalCurrentStep = 0;
+
+    if (totalSteps > 0) {
+        document.getElementById('automation-progress-text').innerText = `0% (0/${totalSteps})`;
+        document.getElementById('automation-progress-bar').style.width = '0%';
+        document.getElementById('automation-progress-bar').classList.remove('animate-water-flow');
+    } else {
+        document.getElementById('automation-progress-text').innerText = 'In Progress';
+        document.getElementById('automation-progress-bar').style.width = '100%';
+        document.getElementById('automation-progress-bar').classList.add('animate-water-flow'); // Make it look indeterminate
+    }
+}
+
+function updateAutomationStep(stepText) {
+    document.getElementById('automation-step-text').innerText = stepText;
+}
+
+function updateAutomationProgress() {
+    modalCurrentStep++;
+    if (modalTotalSteps > 0) {
+        const pct = Math.round((modalCurrentStep / modalTotalSteps) * 100);
+        document.getElementById('automation-progress-text').innerText = `${pct}% (${modalCurrentStep}/${modalTotalSteps})`;
+        document.getElementById('automation-progress-bar').style.width = `${pct}%`;
+    }
+}
+
+function logToModal(message, type = 'info') {
+    const minilog = document.getElementById('automation-mini-log');
+    const item = document.createElement('div');
+    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    let color = 'text-slate-600';
+    if (type === 'error') color = 'text-red-500 font-bold';
+    else if (type === 'success') color = 'text-teal-600 font-bold';
+
+    item.innerHTML = `<span class="text-slate-400 mr-1">[${time}]</span> <span class="${color}">${message}</span>`;
+    minilog.appendChild(item);
+    minilog.scrollTop = minilog.scrollHeight;
+}
+
+function completeAutomationModal(successText = 'Completed successfully!') {
+    document.getElementById('automation-step-text').innerText = successText;
+    document.getElementById('automation-progress-text').innerText = '100%';
+    document.getElementById('automation-progress-bar').style.width = '100%';
+    document.getElementById('automation-progress-bar').classList.remove('animate-water-flow');
+
+    document.getElementById('automation-icon-container').classList.remove('animate-pulse');
+    document.getElementById('automation-spinner').classList.add('hidden');
+    document.getElementById('automation-modal-icon').className = 'fa-solid fa-check-circle text-green-500 text-3xl';
+
+    setTimeout(() => {
+        hideAutomationModal();
+    }, 2000);
+}
+
+function hideAutomationModal(force = false) {
+    if (force) {
+        logBot('Automation modal force closed by user.', 'warn');
+    }
+    const modal = document.getElementById('automation-modal');
+    modal.classList.add('opacity-0');
+    document.getElementById('automation-modal-content').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+// --- Native Browse Dialog --
+async function browseFilePath(wfIdx, tIdx) {
+    if (!window.electronAPI.dialogChooseFile) return;
+    const path = await window.electronAPI.dialogChooseFile();
+    if (path) {
+        window.updateTask(wfIdx, tIdx, 'link', path);
+        // Force re-render of tasks to show the UI update instantly
+        renderTasks();
+    }
+}
+
 // Global scope assignments for inline calls (if any remain)
 window.init = init;
 window.refreshExcelData = refreshExcelData;
@@ -677,6 +866,8 @@ window.updateShortcut = updateShortcut;
 window.deleteShortcut = deleteShortcut;
 window.toggleLogPanel = toggleLogPanel;
 window.logBot = logBot;
+window.browseFilePath = browseFilePath;
+window.hideAutomationModal = hideAutomationModal;
 
 // Entry Point
 document.addEventListener('DOMContentLoaded', init);
